@@ -1,0 +1,40 @@
+{
+  "name": "scrape-server",
+  "version": "1.0.0",
+  "description": "Apify-like web scraper with Express, TypeScript & Node.js",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mozilla/readability": "^0.5.0",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "express": "^5.0.1",
+    "jsdom": "^25.0.1",
+    "playwright": "^1.49.1",
+    "swagger-ui-express": "^5.0.1",
+    "turndown": "^7.2.0",
+    "uuid": "^11.0.3",
+    "yaml": "^2.8.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^25.3.0",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/turndown": "^5.0.5",
+    "@types/uuid": "^10.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "private": true
+}

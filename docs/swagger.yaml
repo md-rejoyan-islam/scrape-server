@@ -1,0 +1,513 @@
+openapi: 3.0.3
+info:
+  title: Scrape Server API
+  description: |
+    Apify-like web scraper API built with Express, Playwright & TypeScript.
+
+    ## Field Filtering
+    All endpoints that return scraped data support a `?fields=` query parameter.
+    Pass a comma-separated list of top-level field names to receive only those fields.
+
+    **Example:** `?fields=url,metadata,links`
+  version: 1.0.0
+  license:
+    name: MIT
+
+servers:
+  - url: /api
+    description: API base path
+
+tags:
+  - name: Health
+    description: Server health check
+  - name: Scrape
+    description: Synchronous & asynchronous scraping
+  - name: Jobs
+    description: Background job management
+
+# ────────────────────────────────────────────────────────────────
+# Paths
+# ────────────────────────────────────────────────────────────────
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns server health status and uptime.
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  uptime:
+                    type: number
+                    example: 123.456
+
+  /scrape:
+    post:
+      tags: [Scrape]
+      summary: Synchronous scrape
+      description: |
+        Scrapes the given URL and returns the result synchronously.
+        Use `?fields=` to select specific fields in the response.
+      parameters:
+        - $ref: "#/components/parameters/FieldsQuery"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScrapeRequestBody"
+      responses:
+        "200":
+          description: Scrape completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: "#/components/schemas/ScrapeResult"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          description: Scrape failed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+
+  /scrape/async:
+    post:
+      tags: [Scrape]
+      summary: Asynchronous scrape
+      description: |
+        Starts a scrape job in the background and returns a `jobId`.
+        Poll `/api/jobs/:jobId` to get the result.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScrapeRequestBody"
+      responses:
+        "200":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  jobId:
+                    type: string
+                    format: uuid
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+  /scrape/batch:
+    post:
+      tags: [Scrape]
+      summary: Batch scrape (max 10 URLs)
+      description: |
+        Queues multiple URLs for scraping in the background.
+        Returns a `batchId` and array of `jobIds`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchRequestBody"
+      responses:
+        "200":
+          description: Batch created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  batchId:
+                    type: string
+                    format: uuid
+                  jobIds:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+  /jobs:
+    get:
+      tags: [Jobs]
+      summary: List all jobs
+      description: Returns a list of all jobs (without their `data` payload).
+      responses:
+        "200":
+          description: Job list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JobSummary"
+
+  /jobs/{jobId}:
+    get:
+      tags: [Jobs]
+      summary: Get job by ID
+      description: |
+        Returns the full job including scraped data (if completed).
+        Use `?fields=` to filter the `data` object fields.
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The job identifier
+        - $ref: "#/components/parameters/FieldsQuery"
+      responses:
+        "200":
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Job not found
+
+# ────────────────────────────────────────────────────────────────
+# Components
+# ────────────────────────────────────────────────────────────────
+
+components:
+  parameters:
+    FieldsQuery:
+      name: fields
+      in: query
+      required: false
+      description: |
+        Comma-separated list of top-level fields to include in the response data.
+        Example: `url,metadata,links`
+      schema:
+        type: string
+      example: url,metadata,links
+
+  responses:
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              errors:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field:
+                      type: string
+                      example: url
+                    message:
+                      type: string
+                      example: A valid URL is required
+
+  schemas:
+    ExtractorName:
+      type: string
+      enum:
+        - links
+        - images
+        - headings
+        - text
+        - prices
+        - tables
+
+    ScrapeRequestBody:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          format: uri
+          example: https://example.com
+          description: The URL to scrape
+        waitFor:
+          type: integer
+          minimum: 0
+          maximum: 60000
+          default: 3000
+          description: Milliseconds to wait after page load
+        extractors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExtractorName"
+          description: Which data extractors to run
+          default:
+            - links
+            - images
+            - headings
+            - text
+            - prices
+            - tables
+        fullHtml:
+          type: boolean
+          default: false
+          description: Include the full HTML in the response
+        screenshot:
+          type: boolean
+          default: false
+          description: Capture a screenshot of the page
+
+    BatchRequestBody:
+      type: object
+      required:
+        - urls
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          maxItems: 10
+          description: Array of URLs to scrape (max 10)
+          example:
+            - https://example.com
+            - https://example.org
+        waitFor:
+          type: integer
+          minimum: 0
+          maximum: 60000
+          default: 3000
+        extractors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExtractorName"
+        fullHtml:
+          type: boolean
+          default: false
+
+    ScrapeResult:
+      type: object
+      description: |
+        The scraped data. Use `?fields=` to select only the fields you need.
+      properties:
+        url:
+          type: string
+        crawl:
+          type: object
+          properties:
+            loadedUrl:
+              type: string
+            loadedTime:
+              type: string
+            httpStatusCode:
+              type: integer
+              nullable: true
+            depth:
+              type: integer
+            contentType:
+              type: string
+        metadata:
+          type: object
+          properties:
+            canonicalUrl:
+              type: string
+            title:
+              type: string
+              nullable: true
+            description:
+              type: string
+              nullable: true
+            author:
+              type: string
+              nullable: true
+            keywords:
+              type: string
+              nullable: true
+            favicon:
+              type: string
+        html:
+          type: string
+          nullable: true
+        markdown:
+          type: string
+          nullable: true
+        screenshotUrl:
+          type: string
+          nullable: true
+        timeTaken:
+          type: string
+        links:
+          type: object
+          properties:
+            total:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  href:
+                    type: string
+                  text:
+                    type: string
+                  isExternal:
+                    type: boolean
+        images:
+          type: object
+          properties:
+            total:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  src:
+                    type: string
+                  alt:
+                    type: string
+        headings:
+          type: object
+          properties:
+            h1:
+              type: array
+              items:
+                type: string
+            h2:
+              type: array
+              items:
+                type: string
+            h3:
+              type: array
+              items:
+                type: string
+        text:
+          type: object
+          properties:
+            bodyTextLength:
+              type: integer
+            bodyTextPreview:
+              type: string
+            paragraphs:
+              type: array
+              items:
+                type: string
+        prices:
+          type: object
+          properties:
+            total:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  text:
+                    type: string
+                  dataPrice:
+                    type: string
+        tables:
+          type: object
+          properties:
+            total:
+              type: integer
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  headers:
+                    type: array
+                    items:
+                      type: string
+                  rows:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: string
+        fullHtml:
+          type: string
+        networkSummary:
+          type: object
+          properties:
+            totalRequests:
+              type: integer
+            byType:
+              type: object
+              additionalProperties:
+                type: integer
+
+    JobSummary:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [running, completed, failed]
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        url:
+          type: string
+        batchId:
+          type: string
+          format: uuid
+        error:
+          type: string
+
+    Job:
+      allOf:
+        - $ref: "#/components/schemas/JobSummary"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/ScrapeResult"

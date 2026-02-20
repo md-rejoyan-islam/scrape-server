@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scrape Server</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #0f1117;
+        color: #e1e4e8;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+      }
+
+      header h1 {
+        font-size: 2.2rem;
+        background: linear-gradient(135deg, #58a6ff, #bc8cff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+      }
+
+      header p {
+        color: #8b949e;
+        font-size: 1rem;
+      }
+
+      .input-section {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .input-row {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      .input-row input[type="text"] {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        color: #e1e4e8;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      .input-row input:focus {
+        border-color: #58a6ff;
+      }
+
+      .btn {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #238636, #2ea043);
+        color: #fff;
+      }
+
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-secondary {
+        background: #21262d;
+        color: #c9d1d9;
+        border: 1px solid #30363d;
+      }
+
+      .btn-secondary:hover {
+        border-color: #58a6ff;
+      }
+
+      .options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+      }
+
+      .options label {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.9rem;
+        color: #8b949e;
+        cursor: pointer;
+      }
+
+      .options label:hover {
+        color: #c9d1d9;
+      }
+
+      .options input[type="checkbox"] {
+        accent-color: #58a6ff;
+      }
+
+      .options input[type="number"] {
+        width: 80px;
+        padding: 0.35rem 0.5rem;
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        color: #e1e4e8;
+        font-size: 0.85rem;
+      }
+
+      .status-bar {
+        display: none;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+      }
+
+      .status-bar.visible {
+        display: flex;
+      }
+
+      .spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid #30363d;
+        border-top-color: #58a6ff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .status-text {
+        font-size: 0.9rem;
+        color: #8b949e;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid #30363d;
+        margin-bottom: 1rem;
+        overflow-x: auto;
+      }
+
+      .tab {
+        padding: 0.65rem 1.2rem;
+        font-size: 0.9rem;
+        color: #8b949e;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s;
+      }
+
+      .tab:hover {
+        color: #c9d1d9;
+      }
+      .tab.active {
+        color: #58a6ff;
+        border-bottom-color: #58a6ff;
+      }
+
+      .tab-content {
+        display: none;
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 10px;
+        padding: 1.25rem;
+        overflow: auto;
+        max-height: 70vh;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      pre {
+        font-size: 0.85rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: #c9d1d9;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+
+      th,
+      td {
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid #21262d;
+      }
+
+      th {
+        color: #58a6ff;
+        font-weight: 600;
+      }
+
+      .tag {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 4px;
+        background: #1f6feb22;
+        color: #58a6ff;
+        margin: 0.15rem;
+      }
+
+      .stat-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      .stat-card {
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+      }
+
+      .stat-card .value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #58a6ff;
+      }
+
+      .stat-card .label {
+        font-size: 0.8rem;
+        color: #8b949e;
+        margin-top: 0.25rem;
+      }
+
+      .screenshot-container img {
+        max-width: 100%;
+        border-radius: 8px;
+        border: 1px solid #30363d;
+      }
+
+      .api-docs {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+      }
+
+      .api-docs h2 {
+        font-size: 1.2rem;
+        color: #bc8cff;
+        margin-bottom: 1rem;
+      }
+
+      .endpoint {
+        background: #0d1117;
+        border: 1px solid #21262d;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        font-family: monospace;
+        font-size: 0.85rem;
+      }
+
+      .method {
+        color: #3fb950;
+        font-weight: 700;
+      }
+      .path {
+        color: #58a6ff;
+      }
+      .desc {
+        color: #8b949e;
+        display: block;
+        margin-top: 0.3rem;
+        font-family: sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>&#x1F578; Scrape Server</h1>
+        <p>
+          Free Apify-like web scraping — paste any URL and extract everything
+        </p>
+      </header>
+
+      <!-- Input -->
+      <div class="input-section">
+        <div class="input-row">
+          <input
+            type="text"
+            id="urlInput"
+            placeholder="https://example.com/product-page"
+          />
+          <button
+            class="btn btn-primary"
+            id="scrapeBtn"
+            onclick="startScrape()"
+          >
+            Scrape
+          </button>
+        </div>
+        <div class="options">
+          <label><input type="checkbox" id="optLinks" checked /> Links</label>
+          <label><input type="checkbox" id="optImages" checked /> Images</label>
+          <label
+            ><input type="checkbox" id="optHeadings" checked /> Headings</label
+          >
+          <label><input type="checkbox" id="optText" checked /> Text</label>
+          <label><input type="checkbox" id="optPrices" checked /> Prices</label>
+          <label><input type="checkbox" id="optTables" checked /> Tables</label>
+          <label><input type="checkbox" id="optHtml" /> Full HTML</label>
+          <label><input type="checkbox" id="optScreenshot" /> Screenshot</label>
+          <label
+            >Wait (ms):
+            <input
+              type="number"
+              id="optWait"
+              value="3000"
+              min="0"
+              max="30000"
+              step="500"
+          /></label>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="status-bar" id="statusBar">
+        <div class="spinner"></div>
+        <span class="status-text" id="statusText">Scraping...</span>
+      </div>
+
+      <!-- Results -->
+      <div id="results" style="display: none">
+        <div class="stat-cards" id="statCards"></div>
+
+        <div class="tabs" id="tabsBar"></div>
+        <div id="tabContents"></div>
+      </div>
+
+      <!-- API Docs -->
+      <div class="api-docs">
+        <h2>API Endpoints</h2>
+        <div class="endpoint">
+          <span class="method">POST</span> <span class="path">/api/scrape</span>
+          <span class="desc"
+            >Synchronous scrape. Body: { "url": "...", "extractors": [...],
+            "waitFor": 3000, "fullHtml": false, "screenshot": false }</span
+          >
+        </div>
+        <div class="endpoint">
+          <span class="method">POST</span>
+          <span class="path">/api/scrape/async</span>
+          <span class="desc"
+            >Async scrape. Returns jobId. Poll /api/jobs/:jobId for
+            results.</span
+          >
+        </div>
+        <div class="endpoint">
+          <span class="method">POST</span>
+          <span class="path">/api/scrape/batch</span>
+          <span class="desc"
+            >Batch scrape up to 10 URLs. Body: { "urls": ["...", "..."] }</span
+          >
+        </div>
+        <div class="endpoint">
+          <span class="method">GET</span>
+          <span class="path">/api/jobs/:jobId</span>
+          <span class="desc">Get async job result.</span>
+        </div>
+        <div class="endpoint">
+          <span class="method">GET</span> <span class="path">/api/jobs</span>
+          <span class="desc">List all jobs.</span>
+        </div>
+        <div class="endpoint">
+          <span class="method">GET</span> <span class="path">/api/health</span>
+          <span class="desc">Health check.</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+
+      async function startScrape() {
+        const url = $("urlInput").value.trim();
+        if (!url) return alert("Enter a URL");
+
+        const extractors = [];
+        if ($("optLinks").checked) extractors.push("links");
+        if ($("optImages").checked) extractors.push("images");
+        if ($("optHeadings").checked) extractors.push("headings");
+        if ($("optText").checked) extractors.push("text");
+        if ($("optPrices").checked) extractors.push("prices");
+        if ($("optTables").checked) extractors.push("tables");
+
+        const body = {
+          url,
+          extractors,
+          waitFor: parseInt($("optWait").value) || 3000,
+          fullHtml: $("optHtml").checked,
+          screenshot: $("optScreenshot").checked,
+        };
+
+        $("scrapeBtn").disabled = true;
+        $("statusBar").classList.add("visible");
+        $("statusText").textContent = `Scraping ${url} ...`;
+        $("results").style.display = "none";
+
+        try {
+          const res = await fetch("/api/scrape", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+
+          const json = await res.json();
+
+          if (json.success) {
+            renderResults(json.data);
+          } else {
+            alert("Error: " + (json.error || "Unknown error"));
+          }
+        } catch (err) {
+          alert("Request failed: " + err.message);
+        } finally {
+          $("scrapeBtn").disabled = false;
+          $("statusBar").classList.remove("visible");
+        }
+      }
+
+      function renderResults(data) {
+        $("results").style.display = "block";
+
+        // Stat cards
+        const stats = [];
+        stats.push({ label: "Time", value: data.timeTaken });
+        if (data.crawl)
+          stats.push({
+            label: "HTTP Status",
+            value: data.crawl.httpStatusCode || "—",
+          });
+        if (data.links) stats.push({ label: "Links", value: data.links.total });
+        if (data.images)
+          stats.push({ label: "Images", value: data.images.total });
+        if (data.prices)
+          stats.push({ label: "Prices", value: data.prices.total });
+        if (data.metadata && data.metadata.jsonLd)
+          stats.push({ label: "JSON-LD", value: data.metadata.jsonLd.length });
+        if (data.tables)
+          stats.push({ label: "Tables", value: data.tables.total });
+        if (data.networkSummary)
+          stats.push({
+            label: "Requests",
+            value: data.networkSummary.totalRequests,
+          });
+        if (data.markdown) stats.push({ label: "Markdown", value: "✓" });
+
+        $("statCards").innerHTML = stats
+          .map(
+            (s) =>
+              `<div class="stat-card"><div class="value">${s.value}</div><div class="label">${s.label}</div></div>`,
+          )
+          .join("");
+
+        // Tabs
+        const tabs = [];
+        tabs.push({
+          id: "overview",
+          label: "Overview",
+          content: renderOverview(data),
+        });
+
+        if (data.crawl)
+          tabs.push({
+            id: "crawl",
+            label: "Crawl Info",
+            content: renderJSON(data.crawl),
+          });
+        if (data.metadata)
+          tabs.push({
+            id: "metadata",
+            label: "Metadata",
+            content: renderMetadata(data.metadata),
+          });
+        if (
+          data.metadata &&
+          data.metadata.jsonLd &&
+          data.metadata.jsonLd.length > 0
+        )
+          tabs.push({
+            id: "jsonld",
+            label: "JSON-LD",
+            content: renderJSON(data.metadata.jsonLd),
+          });
+        if (data.markdown)
+          tabs.push({
+            id: "markdown",
+            label: "Markdown",
+            content: renderMarkdown(data.markdown),
+          });
+        if (data.html)
+          tabs.push({
+            id: "readable",
+            label: "Readable HTML",
+            content: `<div style="position:relative"><button class="btn btn-secondary" style="position:absolute;top:0;right:0;font-size:0.75rem;padding:0.4rem 0.8rem" onclick="copyText(this)">Copy</button><pre>${escapeHtml(data.html.substring(0, 200000))}</pre></div>`,
+          });
+        if (data.prices && data.prices.total > 0)
+          tabs.push({
+            id: "prices",
+            label: "Prices",
+            content: renderPrices(data.prices),
+          });
+        if (data.links)
+          tabs.push({
+            id: "links",
+            label: `Links (${data.links.total})`,
+            content: renderLinks(data.links),
+          });
+        if (data.images)
+          tabs.push({
+            id: "images",
+            label: `Images (${data.images.total})`,
+            content: renderImages(data.images),
+          });
+        if (data.headings)
+          tabs.push({
+            id: "headings",
+            label: "Headings",
+            content: renderJSON(data.headings),
+          });
+        if (data.text)
+          tabs.push({
+            id: "text",
+            label: "Text",
+            content: renderText(data.text),
+          });
+        if (data.tables && data.tables.total > 0)
+          tabs.push({
+            id: "tables",
+            label: `Tables (${data.tables.total})`,
+            content: renderJSON(data.tables),
+          });
+        if (
+          data.metadata &&
+          data.metadata.headers &&
+          Object.keys(data.metadata.headers).length > 0
+        )
+          tabs.push({
+            id: "headers",
+            label: "Headers",
+            content: renderHeaders(data.metadata.headers),
+          });
+        if (data.screenshotUrl)
+          tabs.push({
+            id: "screenshot",
+            label: "Screenshot",
+            content: renderScreenshot(data.screenshotUrl),
+          });
+        if (data.fullHtml)
+          tabs.push({
+            id: "html",
+            label: "Full HTML",
+            content: `<pre>${escapeHtml(data.fullHtml.substring(0, 100000))}</pre>`,
+          });
+        tabs.push({ id: "json", label: "Raw JSON", content: renderJSON(data) });
+
+        $("tabsBar").innerHTML = tabs
+          .map(
+            (t, i) =>
+              `<button class="tab ${i === 0 ? "active" : ""}" onclick="switchTab('${t.id}')">${t.label}</button>`,
+          )
+          .join("");
+
+        $("tabContents").innerHTML = tabs
+          .map(
+            (t, i) =>
+              `<div class="tab-content ${i === 0 ? "active" : ""}" id="tab-${t.id}">${t.content}</div>`,
+          )
+          .join("");
+      }
+
+      function switchTab(id) {
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) => t.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((t) => t.classList.remove("active"));
+        document
+          .querySelector(`[onclick="switchTab('${id}')"]`)
+          .classList.add("active");
+        document.getElementById("tab-" + id).classList.add("active");
+      }
+
+      function renderOverview(data) {
+        let html = `<table>`;
+        html += `<tr><th>URL</th><td><a href="${data.url}" target="_blank" style="color:#58a6ff">${data.url}</a></td></tr>`;
+        if (data.metadata) {
+          html += `<tr><th>Title</th><td>${escapeHtml(data.metadata.title || "")}</td></tr>`;
+        }
+        if (data.crawl) {
+          html += `<tr><th>HTTP Status</th><td>${data.crawl.httpStatusCode || "—"}</td></tr>`;
+          html += `<tr><th>Content Type</th><td>${escapeHtml(data.crawl.contentType || "")}</td></tr>`;
+          html += `<tr><th>Loaded At</th><td>${data.crawl.loadedTime || ""}</td></tr>`;
+        }
+        html += `<tr><th>Time Taken</th><td>${data.timeTaken}</td></tr>`;
+        if (data.metadata) {
+          html += `<tr><th>Description</th><td>${escapeHtml(data.metadata.description || "")}</td></tr>`;
+          html += `<tr><th>Language</th><td>${data.metadata.languageCode || ""}</td></tr>`;
+          html += `<tr><th>Canonical</th><td>${data.metadata.canonicalUrl || ""}</td></tr>`;
+          html += `<tr><th>Author</th><td>${escapeHtml(data.metadata.author || "—")}</td></tr>`;
+          html += `<tr><th>Keywords</th><td>${escapeHtml(data.metadata.keywords || "—")}</td></tr>`;
+          if (data.metadata.jsonLd)
+            html += `<tr><th>JSON-LD Blocks</th><td>${data.metadata.jsonLd.length}</td></tr>`;
+        }
+        if (data.markdown)
+          html += `<tr><th>Markdown</th><td>${data.markdown.length} chars</td></tr>`;
+        if (data.html)
+          html += `<tr><th>Readable HTML</th><td>${data.html.length} chars</td></tr>`;
+        if (data.networkSummary) {
+          html += `<tr><th>Network Requests</th><td>${data.networkSummary.totalRequests}</td></tr>`;
+        }
+        html += `</table>`;
+        return html;
+      }
+
+      function renderMetadata(meta) {
+        let html = `<table>`;
+        html += `<tr><th>Canonical URL</th><td>${escapeHtml(meta.canonicalUrl || "")}</td></tr>`;
+        html += `<tr><th>Title</th><td>${escapeHtml(meta.title || "")}</td></tr>`;
+        html += `<tr><th>Description</th><td>${escapeHtml(meta.description || "")}</td></tr>`;
+        html += `<tr><th>Author</th><td>${escapeHtml(meta.author || "—")}</td></tr>`;
+        html += `<tr><th>Keywords</th><td>${escapeHtml(meta.keywords || "—")}</td></tr>`;
+        html += `<tr><th>Language</th><td>${meta.languageCode || "—"}</td></tr>`;
+        html += `<tr><th>Robots</th><td>${escapeHtml(meta.robots || "—")}</td></tr>`;
+        html += `<tr><th>Favicon</th><td>${escapeHtml(meta.favicon || "")}</td></tr>`;
+        if (meta.openGraph) {
+          html += `<tr><th colspan="2" style="color:#bc8cff;padding-top:1rem">Open Graph</th></tr>`;
+          for (const [k, v] of Object.entries(meta.openGraph)) {
+            html += `<tr><th>og:${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`;
+          }
+        }
+        if (meta.twitter) {
+          html += `<tr><th colspan="2" style="color:#bc8cff;padding-top:1rem">Twitter Card</th></tr>`;
+          for (const [k, v] of Object.entries(meta.twitter)) {
+            html += `<tr><th>twitter:${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`;
+          }
+        }
+        if (meta.microdata && meta.microdata.length > 0) {
+          html += `<tr><th colspan="2" style="color:#bc8cff;padding-top:1rem">Microdata (${meta.microdata.length})</th></tr>`;
+          meta.microdata.forEach((item, i) => {
+            html += `<tr><th>itemtype #${i + 1}</th><td>${escapeHtml(item.itemtype || "")}</td></tr>`;
+          });
+        }
+        html += `</table>`;
+        if (meta.allMeta && meta.allMeta.length > 0) {
+          html += `<h3 style="color:#bc8cff;margin:1rem 0 0.5rem;">All Meta Tags (${meta.allMeta.length})</h3>`;
+          html += renderJSON(meta.allMeta);
+        }
+        return html;
+      }
+
+      function renderMarkdown(md) {
+        return `<div style="position:relative"><button class="btn btn-secondary" style="position:absolute;top:0;right:0;font-size:0.75rem;padding:0.4rem 0.8rem" onclick="copyText(this)">Copy</button><pre style="white-space:pre-wrap">${escapeHtml(md)}</pre></div>`;
+      }
+
+      function renderHeaders(headers) {
+        let html = `<table><tr><th>Header</th><th>Value</th></tr>`;
+        for (const [key, value] of Object.entries(headers)) {
+          html += `<tr><td style="color:#58a6ff;font-family:monospace">${escapeHtml(key)}</td><td style="word-break:break-all">${escapeHtml(String(value))}</td></tr>`;
+        }
+        html += `</table>`;
+        return html;
+      }
+
+      function copyText(btn) {
+        const text = btn.parentElement.querySelector("pre").textContent;
+        navigator.clipboard.writeText(text);
+        btn.textContent = "Copied!";
+        setTimeout(() => (btn.textContent = "Copy"), 1500);
+      }
+
+      function renderPrices(prices) {
+        let html = `<table><tr><th>Price</th><th>Element</th><th>Class</th></tr>`;
+        prices.items.forEach((p) => {
+          html += `<tr><td><strong>${escapeHtml(p.text)}</strong></td><td>${p.element}</td><td><span class="tag">${escapeHtml(p.class.substring(0, 80))}</span></td></tr>`;
+        });
+        html += `</table>`;
+        return html;
+      }
+
+      function renderLinks(links) {
+        let html = `<table><tr><th>Text</th><th>URL</th><th>External</th></tr>`;
+        links.items.slice(0, 200).forEach((l) => {
+          html += `<tr><td>${escapeHtml(l.text.substring(0, 60))}</td><td style="max-width:400px;overflow:hidden;text-overflow:ellipsis"><a href="${l.href}" target="_blank" style="color:#58a6ff;font-size:0.8rem">${escapeHtml(l.href.substring(0, 80))}</a></td><td>${l.isExternal ? "Yes" : "No"}</td></tr>`;
+        });
+        html += `</table>`;
+        return html;
+      }
+
+      function renderImages(images) {
+        let html = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.75rem;">`;
+        images.items.slice(0, 50).forEach((img) => {
+          html += `<div style="background:#0d1117;border-radius:8px;overflow:hidden;border:1px solid #21262d;">
+          <img src="${img.src}" alt="${escapeHtml(img.alt)}" style="width:100%;height:120px;object-fit:cover;" loading="lazy" onerror="this.style.display='none'" />
+          <div style="padding:0.4rem;font-size:0.7rem;color:#8b949e;word-break:break-all">${escapeHtml(img.alt || img.src.split("/").pop())}</div>
+        </div>`;
+        });
+        html += `</div>`;
+        return html;
+      }
+
+      function renderText(text) {
+        let html = `<p style="color:#8b949e;margin-bottom:1rem;">Body length: ${text.bodyTextLength} chars</p>`;
+        html += `<h3 style="color:#bc8cff;margin:1rem 0 0.5rem;">Preview</h3><pre>${escapeHtml(text.bodyTextPreview)}</pre>`;
+        if (text.paragraphs.length > 0) {
+          html += `<h3 style="color:#bc8cff;margin:1rem 0 0.5rem;">Paragraphs (${text.paragraphs.length})</h3>`;
+          text.paragraphs.forEach((p) => {
+            html += `<p style="margin:0.5rem 0;color:#c9d1d9">${escapeHtml(p)}</p>`;
+          });
+        }
+        return html;
+      }
+
+      function renderScreenshot(src) {
+        return `<div class="screenshot-container"><img src="${src}" alt="Screenshot" /></div>`;
+      }
+
+      function renderJSON(data) {
+        const json = JSON.stringify(data, null, 2);
+        return `<div style="position:relative"><button class="btn btn-secondary" style="position:absolute;top:0;right:0;font-size:0.75rem;padding:0.4rem 0.8rem" onclick="copyJSON(this)">Copy</button><pre>${escapeHtml(json.substring(0, 200000))}</pre></div>`;
+      }
+
+      function copyJSON(btn) {
+        const text = btn.parentElement.querySelector("pre").textContent;
+        navigator.clipboard.writeText(text);
+        btn.textContent = "Copied!";
+        setTimeout(() => (btn.textContent = "Copy"), 1500);
+      }
+
+      function escapeHtml(str) {
+        if (!str) return "";
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      // Enter key
+      $("urlInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") startScrape();
+      });
+    </script>
+  </body>
+</html>
