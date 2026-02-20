@@ -1,5 +1,5 @@
 import { DEFAULT_EXTRACTORS, SCRAPE_TIMEOUT_MS } from "../config/index.js";
-import { scrapePage } from "../scraper.js";
+import { scrapePage } from "../utils/scraper.js";
 
 import type { ScrapeRequestBody, ScrapeResult } from "../types/index.js";
 

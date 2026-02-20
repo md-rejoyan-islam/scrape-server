@@ -1,4 +1,7 @@
+import dotenv from "dotenv";
 import type { ExtractorName } from "../types/index.js";
+
+dotenv.config();
 
 export const PORT = Number(process.env.PORT || 3010);
 

@@ -2,18 +2,20 @@
 FROM node:22-slim AS base
 WORKDIR /app
 
-COPY package.json package-lock.json* ./
-RUN npm ci || npm install
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 # ── Stage 2: Build TypeScript ───────────────────────────────
 FROM base AS builder
 COPY tsconfig.json ./
 COPY src ./src
-RUN npx tsc
+RUN pnpm run build
 
 # ── Stage 3: Install Playwright browsers ─────────────────────
 FROM base AS playwright
-RUN npx playwright install --with-deps chromium
+RUN pnpm exec playwright install --with-deps chromium
 
 # ── Stage 4: Production image ────────────────────────────────
 FROM node:22-slim AS production
@@ -47,6 +49,7 @@ COPY --from=builder /app/dist ./dist
 # Copy application assets
 COPY package.json ./
 COPY public ./public
+COPY docs ./docs
 
 # Expose port
 ENV PORT=3000

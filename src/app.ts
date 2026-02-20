@@ -1,5 +1,5 @@
 import cors from "cors";
-import express from "express";
+import express, { Application } from "express";
 import fs from "fs";
 import path from "path";
 import swaggerUi from "swagger-ui-express";
@@ -10,7 +10,7 @@ import apiRoutes from "./routes/index.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
+const app: Application = express();
 
 // ─── MIDDLEWARE ──────────────────────────────────────────────
 

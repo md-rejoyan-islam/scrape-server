@@ -10,7 +10,7 @@ import {
   scrapeBodySchema,
 } from "../validators/scrape.validator.js";
 
-const router = Router();
+const router: Router = Router();
 
 router.post("/scrape", validateBody(scrapeBodySchema), scrapeSync);
 router.post("/scrape/async", validateBody(scrapeBodySchema), scrapeAsync);

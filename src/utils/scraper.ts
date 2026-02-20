@@ -20,7 +20,7 @@ import type {
   ScrapeOptions,
   ScrapeResult,
   TextContent,
-} from "./types/index.js";
+} from "../types/index.js";
 
 // ─── MARKDOWN CONVERTER ─────────────────────────────────────
 

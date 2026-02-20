@@ -1,6 +1,6 @@
 import { app } from "./app.js";
 import { PORT } from "./config/index.js";
-import { closeBrowser } from "./scraper.js";
+import { closeBrowser } from "./utils/scraper.js";
 
 // ─── START ──────────────────────────────────────────────────
 
