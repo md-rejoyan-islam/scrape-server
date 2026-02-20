@@ -15,28 +15,38 @@ RUN pnpm run build
 
 # ── Stage 3: Install Playwright browsers ─────────────────────
 FROM base AS playwright
-RUN pnpm exec playwright install --with-deps chromium
+RUN pnpm exec playwright install --with-deps chromium chrome
 
 # ── Stage 4: Production image ────────────────────────────────
 FROM node:22-slim AS production
 WORKDIR /app
 
-# Install system dependencies for Chromium
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libnss3 \
-    libatk-bridge2.0-0 \
-    libdrm2 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    libgbm1 \
-    libasound2 \
-    libpangocairo-1.0-0 \
-    libgtk-3-0 \
-    libxshmfence1 \
-    libx11-xcb1 \
-    fonts-freefont-ttf \
-    curl \
+# Install Google Chrome stable + system dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       wget gnupg ca-certificates \
+    && wget -qO- https://dl.google.com/linux/linux_signing_key.pub \
+       | gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] \
+       http://dl.google.com/linux/chrome/deb/ stable main" \
+       > /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+       google-chrome-stable \
+       libnss3 \
+       libatk-bridge2.0-0 \
+       libdrm2 \
+       libxcomposite1 \
+       libxdamage1 \
+       libxrandr2 \
+       libgbm1 \
+       libasound2 \
+       libpangocairo-1.0-0 \
+       libgtk-3-0 \
+       libxshmfence1 \
+       libx11-xcb1 \
+       fonts-freefont-ttf \
+       curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy node_modules and Playwright browsers from build stages
