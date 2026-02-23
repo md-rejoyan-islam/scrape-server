@@ -3,14 +3,13 @@ services:
     build: .
     container_name: scrape-server
     ports:
-      - "3000:3000"
-    environment:
-      - PORT=3000
-      - NODE_ENV=production
-    shm_size: '1gb'
+      - "${PORT:-3000}:${PORT:-3000}"
+    env_file:
+      - .env
+    shm_size: "1gb"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-3000}/api/health"]
       interval: 30s
       timeout: 10s
       start_period: 10s

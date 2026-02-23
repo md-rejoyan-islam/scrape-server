@@ -1,0 +1,17 @@
+services:
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: scrape-server-dev
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./docs:/app/docs
+      - ./tsconfig.json:/app/tsconfig.json
+    shm_size: "1gb"
+    restart: unless-stopped

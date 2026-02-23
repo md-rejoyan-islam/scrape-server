@@ -33,7 +33,13 @@ export const scrapeSync = async (
       fields,
     );
 
-    res.json({ success: true, data });
+    // If the scraped page returned a non-200 status, forward that status
+    const pageStatus = result.crawl?.httpStatusCode;
+    if (pageStatus && pageStatus !== 200) {
+      res.status(pageStatus).json({ success: false, data });
+    } else {
+      res.json({ success: true, data });
+    }
   } catch (err: any) {
     console.error("Scrape error:", err.message);
     res.status(500).json({ success: false, error: err.message });

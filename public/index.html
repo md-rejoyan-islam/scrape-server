@@ -468,6 +468,8 @@
 
           if (json.success) {
             renderResults(json.data);
+          } else if (json.data) {
+            renderResults(json.data);
           } else {
             alert("Error: " + (json.error || "Unknown error"));
           }

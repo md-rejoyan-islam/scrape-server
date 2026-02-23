@@ -8,6 +8,8 @@ import {
 } from "playwright";
 import TurndownService from "turndown";
 
+import { BOT_BYPASS_ENABLED } from "../config/index.js";
+
 import type {
   CollectionResult,
   HeadingsMap,
@@ -428,13 +430,22 @@ export async function scrapePage(
     // ─── BOT-CHALLENGE BYPASS ───────────────────────────────
     let html = await page.content();
     const status = response ? response.status() : 200;
+    let botBlocked = false;
 
-    if (
+    const isChallenged =
       looksLikeChallenge(html) ||
       status === 403 ||
       status === 429 ||
-      status === 503
-    ) {
+      status === 503;
+
+    if (isChallenged && !BOT_BYPASS_ENABLED) {
+      console.log(
+        `[scraper] Bot challenge detected (status ${status}) but BOT_BYPASS_ENABLED=false — skipping bypass.`,
+      );
+      botBlocked = true;
+    }
+
+    if (isChallenged && BOT_BYPASS_ENABLED) {
       console.log(
         `[scraper] Challenge detected (status ${status}, ${html.length}b). Waiting for auto-resolve...`,
       );
@@ -552,6 +563,7 @@ export async function scrapePage(
 
       if (looksLikeChallenge(html)) {
         console.log("[scraper] WARNING: Bot protection could not be bypassed.");
+        botBlocked = true;
       } else if (!resolved) {
         console.log("[scraper] Challenge bypassed via cookie retry.");
       }
@@ -718,7 +730,11 @@ export async function scrapePage(
 
     // Use the last document response (reflects real status after challenge redirect)
     const finalResponse = lastDocResponse || response;
-    const httpStatusCode = finalResponse ? finalResponse.status() : null;
+    const httpStatusCode = botBlocked
+      ? 403
+      : finalResponse
+        ? finalResponse.status()
+        : null;
     const contentType = finalResponse
       ? finalResponse.headers()["content-type"] || ""
       : "";
