@@ -105,6 +105,41 @@ export interface NetworkSummary {
   byType: Record<string, number>;
 }
 
+// ─── PRODUCT DATA ───────────────────────────────────────────
+
+export interface ProductVariant {
+  option_name: string | null;
+  option_value: string | null;
+  variant_price_try: number | null;
+  variant_compare_at_price_try: number | null;
+  variant_sku: string | null;
+  variant_weight: string | null;
+  variant_size: string | null;
+  variant_image: string | null;
+  variant_in_stock: boolean | null;
+}
+
+export interface ProductPrice {
+  currency: string;
+  productRegularPrice: number | null;
+  productSellPrice: number | null;
+}
+
+export interface ProductData {
+  productTitle: string | null;
+  languageCode: string | null;
+  productWeight: string | null;
+  priceTry: ProductPrice | null;
+  productDescription: string | null;
+  productFeatures: string | null;
+  productImagelinks: string[];
+  variants: ProductVariant[];
+  productInStock: boolean | null;
+  productSku: string | null;
+  productBrand: string | null;
+  productUrl: string | null;
+}
+
 export interface ScrapeResult {
   url: string;
   crawl: CrawlInfo;
@@ -121,6 +156,7 @@ export interface ScrapeResult {
   tables?: CollectionResult<{ headers: string[]; rows: string[][] }>;
   fullHtml?: string;
   networkSummary: NetworkSummary;
+  product?: ProductData;
 }
 
 // ─── JOB TYPES ──────────────────────────────────────────────

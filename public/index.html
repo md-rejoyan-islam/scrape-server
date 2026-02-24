@@ -499,6 +499,11 @@
           stats.push({ label: "Prices", value: data.prices.total });
         if (data.metadata && data.metadata.jsonLd)
           stats.push({ label: "JSON-LD", value: data.metadata.jsonLd.length });
+        if (data.product)
+          stats.push({
+            label: "Product",
+            value: data.product.productTitle ? "✓" : "—",
+          });
         if (data.tables)
           stats.push({ label: "Tables", value: data.tables.total });
         if (data.networkSummary)
@@ -614,6 +619,12 @@
             id: "html",
             label: "Full HTML",
             content: `<pre>${escapeHtml(data.fullHtml.substring(0, 100000))}</pre>`,
+          });
+        if (data.product)
+          tabs.push({
+            id: "product",
+            label: "Product",
+            content: renderProduct(data.product),
           });
         tabs.push({ id: "json", label: "Raw JSON", content: renderJSON(data) });
 
@@ -777,6 +788,72 @@
 
       function renderScreenshot(src) {
         return `<div class="screenshot-container"><img src="${src}" alt="Screenshot" /></div>`;
+      }
+
+      function renderProduct(product) {
+        let html = `<table>`;
+        html += `<tr><th>Title</th><td>${escapeHtml(product.productTitle || "—")}</td></tr>`;
+        html += `<tr><th>Brand</th><td>${escapeHtml(product.productBrand || "—")}</td></tr>`;
+        html += `<tr><th>SKU</th><td>${escapeHtml(product.productSku || "—")}</td></tr>`;
+        html += `<tr><th>Language</th><td>${escapeHtml(product.languageCode || "—")}</td></tr>`;
+        html += `<tr><th>Weight</th><td>${escapeHtml(product.productWeight || "—")}</td></tr>`;
+        html += `<tr><th>In Stock</th><td>${product.productInStock === true ? "✅ Yes" : product.productInStock === false ? "❌ No" : "—"}</td></tr>`;
+        html += `<tr><th>URL</th><td><a href="${product.productUrl || ""}" target="_blank" style="color:#58a6ff">${escapeHtml(product.productUrl || "—")}</a></td></tr>`;
+
+        if (product.priceTry) {
+          html += `<tr><th colspan="2" style="color:#bc8cff;padding-top:1rem">Pricing (${escapeHtml(product.priceTry.currency)})</th></tr>`;
+          html += `<tr><th>Regular Price</th><td>${product.priceTry.productRegularPrice ?? "—"}</td></tr>`;
+          html += `<tr><th>Sell Price</th><td style="color:#3fb950;font-weight:700">${product.priceTry.productSellPrice ?? "—"}</td></tr>`;
+        }
+
+        html += `<tr><th colspan="2" style="color:#bc8cff;padding-top:1rem">Description</th></tr>`;
+        html += `<tr><td colspan="2" style="white-space:pre-wrap">${escapeHtml(product.productDescription || "—")}</td></tr>`;
+
+        if (product.productFeatures) {
+          html += `<tr><th colspan="2" style="color:#bc8cff;padding-top:1rem">Features</th></tr>`;
+          html += `<tr><td colspan="2">${escapeHtml(product.productFeatures)}</td></tr>`;
+        }
+        html += `</table>`;
+
+        // Images
+        if (product.productImagelinks && product.productImagelinks.length > 0) {
+          html += `<h3 style="color:#bc8cff;margin:1.5rem 0 0.75rem">Product Images (${product.productImagelinks.length})</h3>`;
+          html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.75rem;">`;
+          product.productImagelinks.forEach((src) => {
+            html += `<div style="background:#0d1117;border-radius:8px;overflow:hidden;border:1px solid #21262d;">
+              <img src="${src}" style="width:100%;height:120px;object-fit:cover;" loading="lazy" onerror="this.style.display='none'" />
+              <div style="padding:0.4rem;font-size:0.65rem;color:#8b949e;word-break:break-all">${escapeHtml(src.split("/").pop())}</div>
+            </div>`;
+          });
+          html += `</div>`;
+        }
+
+        // Variants
+        if (product.variants && product.variants.length > 0) {
+          html += `<h3 style="color:#bc8cff;margin:1.5rem 0 0.75rem">Variants (${product.variants.length})</h3>`;
+          html += `<div style="overflow-x:auto;"><table>`;
+          html += `<tr><th>Option</th><th>Value</th><th>Price</th><th>Compare At</th><th>SKU</th><th>Weight</th><th>Size</th><th>In Stock</th><th>Image</th></tr>`;
+          product.variants.forEach((v) => {
+            html += `<tr>`;
+            html += `<td>${escapeHtml(v.option_name || "—")}</td>`;
+            html += `<td>${escapeHtml(v.option_value || "—")}</td>`;
+            html += `<td style="color:#3fb950">${v.variant_price_try ?? "—"}</td>`;
+            html += `<td>${v.variant_compare_at_price_try ?? "—"}</td>`;
+            html += `<td><span class="tag">${escapeHtml(v.variant_sku || "—")}</span></td>`;
+            html += `<td>${escapeHtml(v.variant_weight || "—")}</td>`;
+            html += `<td>${escapeHtml(v.variant_size || "—")}</td>`;
+            html += `<td>${v.variant_in_stock === true ? "✅" : v.variant_in_stock === false ? "❌" : "—"}</td>`;
+            html += `<td>${v.variant_image ? '<img src="' + v.variant_image + '" style="width:40px;height:40px;object-fit:cover;border-radius:4px" onerror="this.style.display=\'none\'" />' : "—"}</td>`;
+            html += `</tr>`;
+          });
+          html += `</table></div>`;
+        }
+
+        // Raw product JSON
+        html += `<h3 style="color:#bc8cff;margin:1.5rem 0 0.75rem">Raw Product JSON</h3>`;
+        html += `<div style="position:relative"><button class="btn btn-secondary" style="position:absolute;top:0;right:0;font-size:0.75rem;padding:0.4rem 0.8rem" onclick="copyJSON(this)">Copy</button><pre>${escapeHtml(JSON.stringify(product, null, 2))}</pre></div>`;
+
+        return html;
       }
 
       function renderJSON(data) {

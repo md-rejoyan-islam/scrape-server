@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch --poll src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "build": "tsc",
     "test": "vitest run",
