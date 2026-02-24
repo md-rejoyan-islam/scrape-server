@@ -47,6 +47,9 @@ RUN apt-get update \
        libx11-xcb1 \
        fonts-freefont-ttf \
        curl \
+       xvfb \
+       x11vnc \
+       novnc \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy node_modules and Playwright browsers from build stages
@@ -61,14 +64,19 @@ COPY package.json ./
 COPY public ./public
 COPY docs ./docs
 
-# Expose port
+# Expose ports (3000 for app, 6080 for noVNC)
 ENV PORT=3000
 ENV NODE_ENV=production
 EXPOSE 3000
+EXPOSE 6080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3000/api/health || exit 1
 
-# Run compiled JS directly with Node
+# Run compiled JS directly with Node using entrypoint script
+COPY scripts/entrypoint.sh /app/scripts/entrypoint.sh
+RUN chmod +x /app/scripts/entrypoint.sh
+
+ENTRYPOINT ["/app/scripts/entrypoint.sh"]
 CMD ["node", "dist/server.js"]

@@ -2,10 +2,15 @@ import { Readability } from "@mozilla/readability";
 import * as cheerio from "cheerio";
 import { JSDOM } from "jsdom";
 import {
-  chromium,
   type Response as PlaywrightResponse,
   type Route,
 } from "playwright";
+import { chromium } from "playwright-extra";
+import stealthPlugin from "puppeteer-extra-plugin-stealth";
+import fs from "fs";
+import path from "path";
+
+chromium.use(stealthPlugin());
 import TurndownService from "turndown";
 
 import { BOT_BYPASS_ENABLED } from "../config/index.js";
@@ -81,7 +86,33 @@ async function quickHumanSignal(page: any): Promise<void> {
       { steps: 3 },
     );
     await page.evaluate(() => window.scrollBy(0, 80));
-  } catch {}
+  } catch { }
+}
+
+// ─── CAPTCHA WEBHOOK NOTIFICATION ───────────────────────────
+
+async function notifyCaptchaWebhook(vncUrl: string, targetUrl: string) {
+  const webhookUrl = process.env.CAPTCHA_WEBHOOK_URL;
+  if (!webhookUrl) return;
+  try {
+    const res = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: "Manual CAPTCHA resolution required.",
+        vncUrl,
+        targetUrl,
+        timestamp: new Date().toISOString()
+      }),
+    });
+    if (res.ok) {
+      console.log(`[scraper] Webhook notification sent to ${webhookUrl}`);
+    } else {
+      console.log(`[scraper] Webhook returned status ${res.status}`);
+    }
+  } catch (err) {
+    console.log(`[scraper] Failed to send webhook:`, err);
+  }
 }
 
 // ─── MAIN SCRAPE FUNCTION ───────────────────────────────────
@@ -161,177 +192,7 @@ export async function scrapePage(
 
     const page = await context.newPage();
 
-    // ─── ADVANCED STEALTH: comprehensive anti-detection ──
-    await page.addInitScript(() => {
-      // Remove webdriver flag
-      Object.defineProperty(navigator, "webdriver", {
-        get: () => undefined,
-      });
-      // Delete the property entirely if possible
-      delete (navigator as any).__proto__.webdriver;
-
-      // Realistic plugins array
-      const makePluginArray = (plugins: any[]) => {
-        const arr = Object.create(PluginArray.prototype);
-        plugins.forEach((p, i) => (arr[i] = p));
-        Object.defineProperty(arr, "length", { get: () => plugins.length });
-        arr.item = (i: number) => plugins[i] || null;
-        arr.namedItem = (name: string) =>
-          plugins.find((p: any) => p.name === name) || null;
-        arr.refresh = () => {};
-        return arr;
-      };
-
-      Object.defineProperty(navigator, "plugins", {
-        get: () =>
-          makePluginArray([
-            {
-              name: "Chrome PDF Plugin",
-              description: "Portable Document Format",
-              filename: "internal-pdf-viewer",
-              length: 1,
-            },
-            {
-              name: "Chrome PDF Viewer",
-              description: "",
-              filename: "mhjfbmdgcfjbbpaeojofohoefgiehjai",
-              length: 1,
-            },
-            {
-              name: "Native Client",
-              description: "",
-              filename: "internal-nacl-plugin",
-              length: 2,
-            },
-          ]),
-      });
-
-      Object.defineProperty(navigator, "languages", {
-        get: () => ["en-US", "en", "tr"],
-      });
-
-      Object.defineProperty(navigator, "platform", {
-        get: () => "Win32",
-      });
-
-      Object.defineProperty(navigator, "hardwareConcurrency", {
-        get: () => 8,
-      });
-
-      Object.defineProperty(navigator, "deviceMemory", {
-        get: () => 8,
-      });
-
-      Object.defineProperty(navigator, "maxTouchPoints", {
-        get: () => 0,
-      });
-
-      // Chrome runtime object
-      const chrome: any = {
-        runtime: {
-          connect: () => {},
-          sendMessage: () => {},
-          onMessage: { addListener: () => {}, removeListener: () => {} },
-          onConnect: { addListener: () => {}, removeListener: () => {} },
-          id: undefined,
-        },
-        loadTimes: () => ({
-          requestTime: Date.now() / 1000 - Math.random() * 2,
-          startLoadTime: Date.now() / 1000 - Math.random(),
-          commitLoadTime: Date.now() / 1000 - Math.random() * 0.5,
-          finishDocumentLoadTime: Date.now() / 1000,
-          finishLoadTime: Date.now() / 1000,
-          firstPaintTime: Date.now() / 1000 - Math.random() * 0.3,
-          firstPaintAfterLoadTime: 0,
-          navigationType: "Other",
-          wasFetchedViaSpdy: true,
-          wasNpnNegotiated: true,
-          npnNegotiatedProtocol: "h2",
-          wasAlternateProtocolAvailable: false,
-          connectionInfo: "h2",
-        }),
-        csi: () => ({
-          onloadT: Date.now(),
-          startE: Date.now() - Math.floor(Math.random() * 1000),
-          pageT: Math.random() * 2000 + 500,
-          tran: 15,
-        }),
-        app: {
-          isInstalled: false,
-          InstallState: {
-            INSTALLED: "installed",
-            NOT_INSTALLED: "not_installed",
-          },
-          RunningState: {
-            CANNOT_RUN: "cannot_run",
-            READY_TO_RUN: "ready_to_run",
-            RUNNING: "running",
-          },
-        },
-      };
-      (window as any).chrome = chrome;
-
-      // Permissions query
-      const originalQuery = window.navigator.permissions.query.bind(
-        window.navigator.permissions,
-      );
-      window.navigator.permissions.query = (parameters: any) =>
-        parameters.name === "notifications"
-          ? Promise.resolve({
-              state: Notification.permission,
-            } as PermissionStatus)
-          : originalQuery(parameters);
-
-      // WebGL vendor/renderer spoofing
-      const getParameter = WebGLRenderingContext.prototype.getParameter;
-      WebGLRenderingContext.prototype.getParameter = function (param: number) {
-        if (param === 37445) return "Intel Inc.";
-        if (param === 37446) return "Intel Iris OpenGL Engine";
-        return getParameter.call(this, param);
-      };
-      const getParameter2 = WebGL2RenderingContext.prototype.getParameter;
-      WebGL2RenderingContext.prototype.getParameter = function (param: number) {
-        if (param === 37445) return "Intel Inc.";
-        if (param === 37446) return "Intel Iris OpenGL Engine";
-        return getParameter2.call(this, param);
-      };
-
-      // Canvas fingerprint noise
-      const origToDataURL = HTMLCanvasElement.prototype.toDataURL;
-      HTMLCanvasElement.prototype.toDataURL = function (
-        type?: string,
-        quality?: any,
-      ) {
-        if (this.width === 0 && this.height === 0)
-          return origToDataURL.call(this, type, quality);
-        const ctx = this.getContext("2d");
-        if (ctx) {
-          const imageData = ctx.getImageData(0, 0, this.width, this.height);
-          for (let i = 0; i < imageData.data.length; i += 4) {
-            imageData.data[i] ^= 1; // very subtle noise
-          }
-          ctx.putImageData(imageData, 0, 0);
-        }
-        return origToDataURL.call(this, type, quality);
-      };
-
-      // Prevent detection of automation iframes
-      Object.defineProperty(HTMLIFrameElement.prototype, "contentWindow", {
-        get: function () {
-          return window;
-        },
-      });
-
-      // sourceBuffer (media check)
-      Object.defineProperty(navigator, "connection", {
-        get: () => ({
-          effectiveType: "4g",
-          rtt: 50,
-          downlink: 10,
-          saveData: false,
-        }),
-      });
-    });
+    // Stealth is handled implicitly by puppeteer-extra-plugin-stealth
 
     // Only block heavy media (video/audio/large fonts)
     await page.route("**/*", (route: Route) => {
@@ -372,7 +233,7 @@ export async function scrapePage(
         // Wait for network to settle
         try {
           await page.waitForLoadState("networkidle", { timeout: 8000 });
-        } catch {}
+        } catch { }
         break; // success — exit retry loop
       } catch (navError: any) {
         const msg = navError?.message || "";
@@ -407,7 +268,7 @@ export async function scrapePage(
                 });
                 try {
                   await page.waitForLoadState("networkidle", { timeout: 8000 });
-                } catch {}
+                } catch { }
                 await page.waitForTimeout(2000);
                 await quickHumanSignal(page);
               } catch (originErr) {
@@ -449,127 +310,46 @@ export async function scrapePage(
 
     if (isChallenged && BOT_BYPASS_ENABLED) {
       console.log(
-        `[scraper] Challenge detected (status ${status}, ${html.length}b). Waiting for auto-resolve...`,
+        `[scraper] Challenge detected (status ${status}, ${html.length}b). Waiting for manual resolution...`,
       );
 
-      // Quick human signal
-      await quickHumanSignal(page);
+      // Generate VNC URL
+      const publicVncBase = process.env.PUBLIC_VNC_URL || "http://localhost:6080/vnc.html";
+      const vncUrl = `${publicVncBase}?autoconnect=true&resize=scale`;
 
-      // Strategy 1: Wait for Cloudflare to auto-redirect after solving.
-      // CF JS challenge typically redirects the browser after ~5-15s.
-      // We race: waitForNavigation (redirect) vs polling content change.
-      const MAX_WAIT = 30000;
+      console.log(`[scraper] 🚨 ACTION REQUIRED: Please resolve the CAPTCHA at: ${vncUrl}`);
+      try {
+        await notifyCaptchaWebhook(vncUrl, url);
+      } catch (e) {
+        console.log("[scraper] Error calling webhook:", e);
+      }
+
+      const MAX_WAIT = 5 * 60 * 1000; // 5 minutes max wait
       const challengeStart = Date.now();
       let resolved = false;
 
-      // Set up a navigation promise (CF redirects after challenge)
-      const navPromise = page
-        .waitForNavigation({ waitUntil: "domcontentloaded", timeout: MAX_WAIT })
-        .then(() => {
-          console.log("[scraper] Navigation detected (challenge redirect).");
-          return true;
-        })
-        .catch(() => false);
-
-      // Also poll content in case of in-place JS replacement (no redirect)
-      const pollPromise = (async () => {
-        while (Date.now() - challengeStart < MAX_WAIT) {
-          await page.waitForTimeout(1500);
-          let h: string;
-          try {
-            h = await page.content();
-          } catch {
-            // Page is mid-navigation (challenge redirect in progress) — skip this tick
-            continue;
-          }
-          if (!looksLikeChallenge(h)) {
-            console.log("[scraper] Challenge resolved (content changed).");
-            return true;
-          }
-          // Try clicking Turnstile checkbox if visible
-          try {
-            for (const frame of page.frames()) {
-              if (
-                frame.url().includes("challenges.cloudflare.com") ||
-                frame.url().includes("turnstile")
-              ) {
-                const cb = await frame.$(
-                  "input[type='checkbox'], .ctp-checkbox-label, #challenge-stage",
-                );
-                if (cb) {
-                  await cb.click({ delay: 60 + Math.random() * 80 });
-                  await page.waitForTimeout(2000);
-                }
-                break;
-              }
-            }
-          } catch {}
-        }
-        return false;
-      })();
-
-      resolved = await Promise.race([navPromise, pollPromise]);
-
-      // Re-read content after resolution — wait for load to settle first
-      try {
-        await page.waitForLoadState("domcontentloaded", { timeout: 5000 });
-      } catch {}
-      try {
-        html = await page.content();
-      } catch {
-        // Page still navigating — give it more time
+      while (Date.now() - challengeStart < MAX_WAIT) {
         await page.waitForTimeout(2000);
+        let currentHtml: string;
         try {
-          html = await page.content();
-        } catch {}
-      }
-      try {
-        await page.waitForLoadState("networkidle", { timeout: 5000 });
-      } catch {}
+          currentHtml = await page.content();
+        } catch {
+          continue; // Navigation in progress
+        }
 
-      // Strategy 2: If still blocked, visit origin first to collect CF cookies
-      if (looksLikeChallenge(html)) {
-        console.log("[scraper] Still blocked — cookie retry via origin...");
-        try {
-          const origin = new URL(url).origin;
-          await page.goto(origin, {
-            waitUntil: "domcontentloaded",
-            timeout: 15000,
-          });
-
-          // Wait for origin challenge to clear (watch for redirect)
-          try {
-            await page.waitForNavigation({
-              waitUntil: "domcontentloaded",
-              timeout: 15000,
-            });
-          } catch {}
-          try {
-            await page.waitForLoadState("networkidle", { timeout: 8000 });
-          } catch {}
-
-          // Now go to the actual target with CF cookies set
-          response = await page.goto(url, {
-            waitUntil: "domcontentloaded",
-            timeout: 20000,
-          });
-          try {
-            await page.waitForLoadState("networkidle", { timeout: 8000 });
-          } catch {}
-          await page.waitForTimeout(2000);
-          html = await page.content();
-        } catch (e) {
-          console.log(`[scraper] Cookie retry failed: ${e}`);
+        if (!looksLikeChallenge(currentHtml)) {
+          console.log("[scraper] ✅ Challenge manually resolved!");
+          resolved = true;
+          html = currentHtml; // Update our html
+          break;
         }
       }
 
-      if (looksLikeChallenge(html)) {
-        console.log("[scraper] WARNING: Bot protection could not be bypassed.");
+      if (!resolved) {
+        console.log("[scraper] ❌ Manual resolution timed out.");
         botBlocked = true;
-      } else if (!resolved) {
-        console.log("[scraper] Challenge bypassed via cookie retry.");
       }
-    } else {
+    } else if (!isChallenged) {
       console.log("[scraper] Page loaded (no challenge).");
     }
 
@@ -637,7 +417,7 @@ export async function scrapePage(
                 htmlEl.click();
               }
             });
-          } catch {}
+          } catch { }
         }
 
         // Strategy 2: Click elements with X or × text content
@@ -701,7 +481,7 @@ export async function scrapePage(
                 }
               }
             });
-          } catch {}
+          } catch { }
         }
 
         // Strategy 4: Restore body scroll (popups often add overflow:hidden)
@@ -725,7 +505,7 @@ export async function scrapePage(
       await page.waitForTimeout(2000);
       try {
         html = await page.content();
-      } catch {}
+      } catch { }
     }
     const pageTitle = await page.title();
     const pageUrl = page.url();
@@ -745,7 +525,7 @@ export async function scrapePage(
       responseHeaders = finalResponse
         ? (finalResponse.headers() as Record<string, string>)
         : {};
-    } catch {}
+    } catch { }
 
     if (finalResponse !== response && finalResponse) {
       console.log(
@@ -773,7 +553,7 @@ export async function scrapePage(
         readableHtml = article.content || "";
         readableTitle = article.title || "";
       }
-    } catch {}
+    } catch { }
 
     // Markdown via Turndown
     let markdown = "";
@@ -784,7 +564,7 @@ export async function scrapePage(
           markdown = `# ${readableTitle}\n\n${markdown}`;
         }
       }
-    } catch {}
+    } catch { }
 
     // Build result
     const result: ScrapeResult = {
@@ -847,7 +627,7 @@ export async function scrapePage(
 
     return result;
   } finally {
-    if (browser) await browser.close().catch(() => {});
+    if (browser) await browser.close().catch(() => { });
   }
 }
 
@@ -890,7 +670,7 @@ function buildMetadata(
     try {
       const json = JSON.parse($(el).html() || "");
       jsonLd.push(json);
-    } catch {}
+    } catch { }
   });
 
   // Microdata
@@ -1215,8 +995,8 @@ function buildProductData(
     null;
   let sellPrice = parsePrice(
     mainOffer?.price ??
-      mainOffer?.lowPrice ??
-      getProductMicrodata(microdataItems, "price"),
+    mainOffer?.lowPrice ??
+    getProductMicrodata(microdataItems, "price"),
   );
   let regularPrice = parsePrice(mainOffer?.highPrice) || sellPrice;
 
@@ -1238,10 +1018,10 @@ function buildProductData(
   const priceTry =
     currency || sellPrice !== null
       ? {
-          currency: currency || "TRY",
-          productRegularPrice: regularPrice,
-          productSellPrice: sellPrice,
-        }
+        currency: currency || "TRY",
+        productRegularPrice: regularPrice,
+        productSellPrice: sellPrice,
+      }
       : null;
 
   // ── In stock ──────────────────────────────────────────────
