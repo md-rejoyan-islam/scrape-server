@@ -13,7 +13,7 @@ import path from "path";
 chromium.use(stealthPlugin());
 import TurndownService from "turndown";
 
-import { BOT_BYPASS_ENABLED } from "../config/index.js";
+import { BOT_BYPASS_ENABLED, HEADLESS } from "../config/index.js";
 
 import type {
   CollectionResult,
@@ -130,6 +130,7 @@ export async function scrapePage(
 
   const startTime = Date.now();
   let browser;
+  let context;
 
   try {
     // Use system Chrome (much harder for Cloudflare to fingerprint)
@@ -140,26 +141,23 @@ export async function scrapePage(
       "--disable-dev-shm-usage",
       "--disable-blink-features=AutomationControlled",
       "--window-size=1920,1080",
+      "--window-position=0,0",
       "--lang=en-US,en",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--disable-infobars",
+      "--start-maximized",
     ];
-    try {
-      browser = await chromium.launch({
-        channel: "chrome",
-        headless: true,
-        args: launchArgs,
-      });
-      console.log("[scraper] Using system Chrome.");
-    } catch {
-      console.log(
-        "[scraper] System Chrome not found, falling back to Chromium.",
-      );
-      browser = await chromium.launch({
-        headless: true,
-        args: launchArgs,
-      });
+
+    // Force X11 rendering when a DISPLAY is available (Docker/VNC)
+    if (process.env.DISPLAY) {
+      launchArgs.push("--ozone-platform=x11");
     }
 
-    const context = await browser.newContext({
+    const useHeadless = process.env.DISPLAY ? false : HEADLESS;
+    console.log(`[scraper] DISPLAY=${process.env.DISPLAY || "(not set)"}, headless=${useHeadless}`);
+
+    const contextOptions = {
       userAgent:
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
       viewport: { width: 1920, height: 1080 },
@@ -188,9 +186,52 @@ export async function scrapePage(
         Connection: "keep-alive",
         DNT: "1",
       },
-    });
+    };
 
-    const page = await context.newPage();
+    // When DISPLAY is set (Docker/VNC), use launchPersistentContext to create a
+    // VISIBLE browser window. Playwright's launch() injects --no-startup-window
+    // which makes Chrome completely invisible on the X display.
+    if (process.env.DISPLAY && !useHeadless) {
+      const userDataDir = `/tmp/pw_chrome_profile_${Date.now()}`;
+      try {
+        context = await chromium.launchPersistentContext(userDataDir, {
+          channel: "chrome",
+          headless: false,
+          args: launchArgs,
+          ...contextOptions,
+        });
+        browser = context.browser();
+        console.log("[scraper] Using system Chrome (visible on VNC).");
+      } catch {
+        console.log("[scraper] System Chrome not found for persistent context, trying Chromium.");
+        context = await chromium.launchPersistentContext(userDataDir, {
+          headless: false,
+          args: launchArgs,
+          ...contextOptions,
+        });
+        browser = context.browser();
+      }
+    } else {
+      // Standard headless launch (no DISPLAY or headless mode)
+      try {
+        browser = await chromium.launch({
+          channel: "chrome",
+          headless: useHeadless,
+          args: launchArgs,
+        });
+        console.log("[scraper] Using system Chrome.");
+      } catch {
+        console.log("[scraper] System Chrome not found, falling back to Chromium.");
+        browser = await chromium.launch({
+          headless: useHeadless,
+          args: launchArgs,
+        });
+      }
+
+      context = await browser.newContext(contextOptions);
+    }
+
+    const page = context.pages()[0] || await context.newPage();
 
     // Stealth is handled implicitly by puppeteer-extra-plugin-stealth
 
@@ -317,7 +358,11 @@ export async function scrapePage(
       const publicVncBase = process.env.PUBLIC_VNC_URL || "http://localhost:6080/vnc.html";
       const vncUrl = `${publicVncBase}?autoconnect=true&resize=scale`;
 
-      console.log(`[scraper] 🚨 ACTION REQUIRED: Please resolve the CAPTCHA at: ${vncUrl}`);
+      if (HEADLESS) {
+        console.log(`[scraper] 🚨 ACTION REQUIRED: Please resolve the CAPTCHA at: ${vncUrl}`);
+      } else {
+        console.log(`[scraper] 🚨 ACTION REQUIRED: Please resolve the CAPTCHA in the opened Chrome window.`);
+      }
       try {
         await notifyCaptchaWebhook(vncUrl, url);
       } catch (e) {
@@ -627,6 +672,7 @@ export async function scrapePage(
 
     return result;
   } finally {
+    if (context && !browser) await context.close().catch(() => { });
     if (browser) await browser.close().catch(() => { });
   }
 }

@@ -8,7 +8,10 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`\n🚀 Scrape Server running at http://localhost:${PORT}`);
   console.log(`📡 API:  http://localhost:${PORT}/api/scrape`);
   console.log(`📖 Docs: http://localhost:${PORT}/api-docs`);
-  console.log(`🖥️  UI:   http://localhost:${PORT}\n`);
+  console.log(`🖥️  UI:   http://localhost:${PORT}`);
+  import("./config/index.js").then(({ HEADLESS }) => {
+    console.log(`\n⚙️  Running with HEADLESS=${HEADLESS}\n`);
+  });
 });
 
 // ─── GRACEFUL SHUTDOWN ──────────────────────────────────────
