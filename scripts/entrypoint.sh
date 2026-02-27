@@ -5,7 +5,7 @@ set -e
 
 # Start X virtual framebuffer in the background
 echo "Starting Xvfb on :99..."
-Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp &
+Xvfb :99 -screen 0 1920x1080x24 -ac -nolisten tcp &
 export DISPLAY=:99
 
 # Start fluxbox window manager so browser renders correctly and we have a desktop

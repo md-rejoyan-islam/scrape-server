@@ -78,15 +78,26 @@ function looksLikeChallenge(html: string): boolean {
   return false;
 }
 
-/** Quick single mouse wiggle + tiny scroll — takes ~300ms total */
+/** Realistic mouse movements + scroll — takes ~600ms total */
 async function quickHumanSignal(page: any): Promise<void> {
   try {
+    // Multi-step mouse movement across the viewport
+    const startX = 100 + Math.random() * 300;
+    const startY = 200 + Math.random() * 150;
+    await page.mouse.move(startX, startY, { steps: 5 });
+    await page.waitForTimeout(100 + Math.random() * 200);
+
+    // Move to another position (simulates looking around)
     await page.mouse.move(
-      400 + Math.random() * 600,
-      300 + Math.random() * 200,
-      { steps: 3 },
+      startX + 200 + Math.random() * 400,
+      startY + 50 + Math.random() * 200,
+      { steps: 8 },
     );
-    await page.evaluate(() => window.scrollBy(0, 80));
+    await page.waitForTimeout(50 + Math.random() * 150);
+
+    // Small scroll down (like reading the page)
+    await page.evaluate(() => window.scrollBy(0, 60 + Math.random() * 120));
+    await page.waitForTimeout(100 + Math.random() * 200);
   } catch { }
 }
 
@@ -148,6 +159,19 @@ export async function scrapePage(
       "--no-default-browser-check",
       "--disable-infobars",
       "--start-maximized",
+      "--disable-component-update",
+      "--disable-default-apps",
+      "--disable-extensions",
+      "--disable-hang-monitor",
+      "--disable-popup-blocking",
+      "--disable-prompt-on-repost",
+      "--disable-sync",
+      "--disable-translate",
+      "--metrics-recording-only",
+      "--no-service-autorun",
+      "--password-store=basic",
+      "--use-mock-keychain",
+      "--test-type",
     ];
 
     // Force X11 rendering when a DISPLAY is available (Docker/VNC)
@@ -160,7 +184,7 @@ export async function scrapePage(
 
     const contextOptions = {
       userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
       viewport: { width: 1920, height: 1080 },
       screen: { width: 1920, height: 1080 },
       locale: "en-US",
@@ -176,7 +200,7 @@ export async function scrapePage(
         "Accept-Encoding": "gzip, deflate, br, zstd",
         "Cache-Control": "max-age=0",
         "Sec-Ch-Ua":
-          '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+          '"Google Chrome";v="133", "Chromium";v="133", "Not_A Brand";v="24"',
         "Sec-Ch-Ua-Mobile": "?0",
         "Sec-Ch-Ua-Platform": '"Windows"',
         "Sec-Fetch-Dest": "document",
@@ -192,6 +216,9 @@ export async function scrapePage(
     // When DISPLAY is set (Docker/VNC), use launchPersistentContext to create a
     // VISIBLE browser window. Playwright's launch() injects --no-startup-window
     // which makes Chrome completely invisible on the X display.
+    // Suppress --enable-automation (removes the "controlled by automated software" infobar)
+    const ignoreDefaults = ["--enable-automation"];
+
     if (process.env.DISPLAY && !useHeadless) {
       const userDataDir = `/tmp/pw_chrome_profile_${Date.now()}`;
       try {
@@ -199,6 +226,7 @@ export async function scrapePage(
           channel: "chrome",
           headless: false,
           args: launchArgs,
+          ignoreDefaultArgs: ignoreDefaults,
           ...contextOptions,
         });
         browser = context.browser();
@@ -208,6 +236,7 @@ export async function scrapePage(
         context = await chromium.launchPersistentContext(userDataDir, {
           headless: false,
           args: launchArgs,
+          ignoreDefaultArgs: ignoreDefaults,
           ...contextOptions,
         });
         browser = context.browser();
@@ -219,6 +248,7 @@ export async function scrapePage(
           channel: "chrome",
           headless: useHeadless,
           args: launchArgs,
+          ignoreDefaultArgs: ignoreDefaults,
         });
         console.log("[scraper] Using system Chrome.");
       } catch {
@@ -226,6 +256,7 @@ export async function scrapePage(
         browser = await chromium.launch({
           headless: useHeadless,
           args: launchArgs,
+          ignoreDefaultArgs: ignoreDefaults,
         });
       }
 
@@ -234,10 +265,91 @@ export async function scrapePage(
 
     const page = context.pages()[0] || await context.newPage();
 
-    // ─── INTERCEPT TURNSTILE RENDER (before navigation) ─────
-    // Injects a script that captures Turnstile sitekey, cData, chlPageData,
-    // action, and callback so we can solve them via 2Captcha.
+    // ─── ANTI-DETECTION INIT SCRIPTS (before navigation) ─────
+    // Override automation-detectable properties that stealth plugin may miss
     await page.addInitScript(() => {
+      // 1. Force navigator.webdriver to undefined
+      Object.defineProperty(navigator, 'webdriver', {
+        get: () => undefined,
+        configurable: true,
+      });
+
+      // 2. Add chrome.runtime (missing in automation mode)
+      if (!(window as any).chrome) {
+        (window as any).chrome = {};
+      }
+      if (!(window as any).chrome.runtime) {
+        (window as any).chrome.runtime = {
+          id: undefined,
+          connect: () => { },
+          sendMessage: () => { },
+          onMessage: { addListener: () => { }, removeListener: () => { }, hasListener: () => false },
+          onConnect: { addListener: () => { }, removeListener: () => { }, hasListener: () => false },
+        };
+      }
+
+      // 3. Fix navigator.plugins (headless/automation shows 0 plugins)
+      Object.defineProperty(navigator, 'plugins', {
+        get: () => {
+          const plugins = [
+            { name: 'Chrome PDF Plugin', filename: 'internal-pdf-viewer', description: 'Portable Document Format' },
+            { name: 'Chrome PDF Viewer', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai', description: '' },
+            { name: 'Native Client', filename: 'internal-nacl-plugin', description: '' },
+          ];
+          const arr: any = Object.create(PluginArray.prototype);
+          plugins.forEach((p, i) => {
+            const plugin: any = Object.create(Plugin.prototype);
+            Object.defineProperties(plugin, {
+              name: { value: p.name, enumerable: true },
+              filename: { value: p.filename, enumerable: true },
+              description: { value: p.description, enumerable: true },
+              length: { value: 0, enumerable: true },
+            });
+            arr[i] = plugin;
+          });
+          Object.defineProperty(arr, 'length', { value: plugins.length });
+          return arr;
+        },
+        configurable: true,
+      });
+
+      // 4. Fix navigator.mimeTypes
+      Object.defineProperty(navigator, 'mimeTypes', {
+        get: () => {
+          const arr: any = Object.create(MimeTypeArray.prototype);
+          Object.defineProperty(arr, 'length', { value: 2 });
+          return arr;
+        },
+        configurable: true,
+      });
+
+      // 5. Fix Notification.permission (headless returns 'denied')
+      if (typeof Notification !== 'undefined') {
+        Object.defineProperty(Notification, 'permission', {
+          get: () => 'default',
+          configurable: true,
+        });
+      }
+
+      // 6. Fix navigator.permissions.query for push/notifications
+      const origQuery = navigator.permissions?.query?.bind(navigator.permissions);
+      if (origQuery) {
+        navigator.permissions.query = (parameters: any) => {
+          if (parameters.name === 'notifications') {
+            return Promise.resolve({ state: 'prompt', onchange: null } as any);
+          }
+          return origQuery(parameters);
+        };
+      }
+
+      // 7. Remove automation-related properties from window
+      delete (window as any).__playwright;
+      delete (window as any).__pw_manual;
+      delete (window as any).__PW_inspect;
+
+      // 8. Intercept Turnstile render to capture params WITHOUT blocking it
+      //    We wrap the original render so the widget still loads normally,
+      //    but we save the sitekey/action/cData for 2Captcha solving.
       (window as any).__turnstileParams = null;
       (window as any).__turnstileCallback = null;
 
@@ -254,8 +366,8 @@ export async function scrapePage(
             };
             (window as any).__turnstileCallback = options.callback || null;
             console.log('[turnstile-interceptor] Captured params:', JSON.stringify((window as any).__turnstileParams));
-            // Return a dummy widget ID
-            return 'intercepted-widget';
+            // Call the ORIGINAL render so the widget actually loads
+            return originalRender.call((window as any).turnstile, container, options);
           };
         }
       }, 50);
@@ -287,6 +399,10 @@ export async function scrapePage(
         lastDocResponse = resp;
       }
     });
+
+    // ─── HUMAN-LIKE WARM-UP (before navigation) ──────────────
+    // Small random delay to avoid perfectly timed requests
+    await page.waitForTimeout(500 + Math.random() * 1000);
 
     // ─── NAVIGATE (with retry on ERR_ABORTED / network errors) ──
     console.log(`[scraper] Navigating to: ${url}`);
@@ -358,6 +474,10 @@ export async function scrapePage(
     if (!response) {
       console.log("[scraper] No response object — using page content as-is.");
     }
+
+    // ─── POST-NAVIGATION HUMAN SIGNAL ────────────────────────
+    // Simulate mouse movement + scroll so Cloudflare sees human-like behavior
+    await quickHumanSignal(page);
 
     // ─── BOT-CHALLENGE BYPASS ───────────────────────────────
     let html = await page.content();
