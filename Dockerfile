@@ -13,9 +13,7 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN pnpm run build
 
-# ── Stage 3: Install Playwright browsers ─────────────────────
-FROM base AS playwright
-RUN pnpm exec playwright install --with-deps chromium chrome
+# Playwright will use the system-installed Google Chrome (installed in production stage)
 
 # ── Stage 4: Production image ────────────────────────────────
 FROM node:22-slim AS production
@@ -63,9 +61,8 @@ RUN wget -qO /tmp/novnc.tar.gz https://github.com/novnc/noVNC/archive/refs/tags/
    && rm -f /tmp/novnc.tar.gz /tmp/websockify.tar.gz \
    && ln -sf /opt/noVNC/vnc.html /opt/noVNC/index.html
 
-# Copy node_modules and Playwright browsers from build stages
+# Copy node_modules from base stage
 COPY --from=base /app/node_modules ./node_modules
-COPY --from=playwright /root/.cache/ms-playwright /root/.cache/ms-playwright
 
 # Copy compiled JS from builder
 COPY --from=builder /app/dist ./dist
@@ -78,6 +75,8 @@ COPY docs ./docs
 # Expose ports (3000 for app, 6080 for noVNC)
 ENV PORT=3000
 ENV NODE_ENV=production
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
 EXPOSE 3000
 EXPOSE 6080
 
