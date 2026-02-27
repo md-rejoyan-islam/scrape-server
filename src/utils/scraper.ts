@@ -13,7 +13,8 @@ import path from "path";
 chromium.use(stealthPlugin());
 import TurndownService from "turndown";
 
-import { BOT_BYPASS_ENABLED, HEADLESS } from "../config/index.js";
+import { BOT_BYPASS_ENABLED, HEADLESS, TWO_CAPTCHA_API_KEY } from "../config/index.js";
+import { solveTurnstile } from "./captcha-solver.js";
 
 import type {
   CollectionResult,
@@ -233,6 +234,33 @@ export async function scrapePage(
 
     const page = context.pages()[0] || await context.newPage();
 
+    // ─── INTERCEPT TURNSTILE RENDER (before navigation) ─────
+    // Injects a script that captures Turnstile sitekey, cData, chlPageData,
+    // action, and callback so we can solve them via 2Captcha.
+    await page.addInitScript(() => {
+      (window as any).__turnstileParams = null;
+      (window as any).__turnstileCallback = null;
+
+      const i = setInterval(() => {
+        if ((window as any).turnstile) {
+          clearInterval(i);
+          const originalRender = (window as any).turnstile.render;
+          (window as any).turnstile.render = (container: any, options: any) => {
+            (window as any).__turnstileParams = {
+              sitekey: options.sitekey || options.siteKey || '',
+              action: options.action || '',
+              cData: options.cData || '',
+              chlPageData: options.chlPageData || '',
+            };
+            (window as any).__turnstileCallback = options.callback || null;
+            console.log('[turnstile-interceptor] Captured params:', JSON.stringify((window as any).__turnstileParams));
+            // Return a dummy widget ID
+            return 'intercepted-widget';
+          };
+        }
+      }, 50);
+    });
+
     // Stealth is handled implicitly by puppeteer-extra-plugin-stealth
 
     // Only block heavy media (video/audio/large fonts)
@@ -351,48 +379,181 @@ export async function scrapePage(
 
     if (isChallenged && BOT_BYPASS_ENABLED) {
       console.log(
-        `[scraper] Challenge detected (status ${status}, ${html.length}b). Waiting for manual resolution...`,
+        `[scraper] Challenge detected (status ${status}, ${html.length}b). Attempting bypass...`,
       );
 
-      // Generate VNC URL
-      const publicVncBase = process.env.PUBLIC_VNC_URL || "http://localhost:6080/vnc.html";
-      const vncUrl = `${publicVncBase}?autoconnect=true&resize=scale`;
+      let autoCaptchaSolved = false;
 
-      if (HEADLESS) {
-        console.log(`[scraper] 🚨 ACTION REQUIRED: Please resolve the CAPTCHA at: ${vncUrl}`);
-      } else {
-        console.log(`[scraper] 🚨 ACTION REQUIRED: Please resolve the CAPTCHA in the opened Chrome window.`);
-      }
-      try {
-        await notifyCaptchaWebhook(vncUrl, url);
-      } catch (e) {
-        console.log("[scraper] Error calling webhook:", e);
-      }
-
-      const MAX_WAIT = 5 * 60 * 1000; // 5 minutes max wait
-      const challengeStart = Date.now();
-      let resolved = false;
-
-      while (Date.now() - challengeStart < MAX_WAIT) {
-        await page.waitForTimeout(2000);
-        let currentHtml: string;
+      // ─── STRATEGY 1: Automated 2Captcha solving ──────────
+      if (TWO_CAPTCHA_API_KEY) {
+        console.log("[scraper] 2Captcha API key found — attempting automated solve...");
         try {
-          currentHtml = await page.content();
-        } catch {
-          continue; // Navigation in progress
-        }
+          // Try to get intercepted Turnstile params from our init script
+          const interceptedParams = await page.evaluate(() => {
+            return (window as any).__turnstileParams || null;
+          });
 
-        if (!looksLikeChallenge(currentHtml)) {
-          console.log("[scraper] ✅ Challenge manually resolved!");
-          resolved = true;
-          html = currentHtml; // Update our html
-          break;
+          // Build solver params
+          let websiteKey = '';
+          let action = '';
+          let data = '';
+          let pagedata = '';
+
+          if (interceptedParams && interceptedParams.sitekey) {
+            // Got params from our interceptor
+            websiteKey = interceptedParams.sitekey;
+            action = interceptedParams.action || '';
+            data = interceptedParams.cData || '';
+            pagedata = interceptedParams.chlPageData || '';
+            console.log(`[scraper] Intercepted Turnstile params — sitekey: ${websiteKey.substring(0, 12)}...`);
+          } else {
+            // Fallback: extract sitekey from DOM
+            const domSitekey = await page.evaluate(() => {
+              // Look for data-sitekey attribute on Turnstile elements
+              const el = document.querySelector('[data-sitekey]') ||
+                document.querySelector('.cf-turnstile[data-sitekey]') ||
+                document.querySelector('div[data-sitekey]');
+              return el?.getAttribute('data-sitekey') || '';
+            });
+
+            if (domSitekey) {
+              websiteKey = domSitekey;
+              console.log(`[scraper] Found sitekey from DOM: ${websiteKey.substring(0, 12)}...`);
+            } else {
+              // Last resort: try to extract from page source (cf_chl_opt or Turnstile script)
+              const sitekeyFromHtml = html.match(/sitekey["':]\s*["']([0-9x_A-Za-z-]+)["']/)?.[1] || '';
+              if (sitekeyFromHtml) {
+                websiteKey = sitekeyFromHtml;
+                console.log(`[scraper] Extracted sitekey from HTML source: ${websiteKey.substring(0, 12)}...`);
+              }
+            }
+
+            // Try to extract challenge page params from HTML source
+            if (!data) {
+              const cDataMatch = html.match(/cData["':]\s*["']([^"']+)["']/)?.[1];
+              if (cDataMatch) data = cDataMatch;
+            }
+            if (!pagedata) {
+              const chlPageDataMatch = html.match(/chlPageData["':]\s*["']([^"']+)["']/)?.[1];
+              if (chlPageDataMatch) pagedata = chlPageDataMatch;
+            }
+            if (!action) {
+              const actionMatch = html.match(/action["':]\s*["'](managed|interactive|non-interactive)["']/)?.[1];
+              if (actionMatch) action = actionMatch;
+            }
+          }
+
+          if (websiteKey) {
+            // Build params for 2Captcha
+            const solverParams: any = {
+              websiteURL: page.url(),
+              websiteKey,
+            };
+            if (action) solverParams.action = action;
+            if (data) solverParams.data = data;
+            if (pagedata) solverParams.pagedata = pagedata;
+
+            console.log(`[scraper] Solving Turnstile via 2Captcha (challenge page: ${!!(action || data || pagedata)})...`);
+            const solution = await solveTurnstile(solverParams);
+
+            // Inject the solved token into the page
+            console.log("[scraper] Injecting 2Captcha solution token into page...");
+            await page.evaluate((token: string) => {
+              // Set Turnstile response inputs
+              const inputs = document.querySelectorAll(
+                'input[name="cf-turnstile-response"], input[name="g-recaptcha-response"]'
+              );
+              inputs.forEach((input) => {
+                (input as HTMLInputElement).value = token;
+              });
+
+              // Also try hidden Turnstile input by looking for common patterns
+              const hiddenInputs = document.querySelectorAll(
+                'textarea[name="cf-turnstile-response"], textarea[name="g-recaptcha-response"]'
+              );
+              hiddenInputs.forEach((input) => {
+                (input as HTMLTextAreaElement).value = token;
+              });
+
+              // Call the intercepted callback if available
+              if (typeof (window as any).__turnstileCallback === 'function') {
+                console.log('[scraper] Calling Turnstile callback with token...');
+                (window as any).__turnstileCallback(token);
+              }
+            }, solution.token);
+
+            // Wait for the challenge to resolve and page to reload
+            console.log("[scraper] Waiting for challenge resolution after token injection...");
+            await page.waitForTimeout(3000);
+
+            // Check if challenge is resolved
+            try {
+              await page.waitForLoadState("networkidle", { timeout: 15000 });
+            } catch { }
+
+            const postSolveHtml = await page.content();
+            if (!looksLikeChallenge(postSolveHtml)) {
+              console.log("[scraper] ✅ Challenge resolved via 2Captcha!");
+              html = postSolveHtml;
+              autoCaptchaSolved = true;
+            } else {
+              console.log("[scraper] ⚠️ 2Captcha token injected but challenge persists. Falling back...");
+            }
+          } else {
+            console.log("[scraper] ⚠️ Could not find Turnstile sitekey. Falling back to manual resolution...");
+          }
+        } catch (captchaErr: any) {
+          console.log(`[scraper] ⚠️ 2Captcha automated solve failed: ${captchaErr.message}`);
+          console.log("[scraper] Falling back to manual resolution...");
         }
+      } else {
+        console.log("[scraper] No TWO_CAPTCHA_API_KEY configured. Skipping automated solve.");
       }
 
-      if (!resolved) {
-        console.log("[scraper] ❌ Manual resolution timed out.");
-        botBlocked = true;
+      // ─── STRATEGY 2: Manual VNC-based resolution (fallback) ──
+      if (!autoCaptchaSolved) {
+        console.log("[scraper] Waiting for manual CAPTCHA resolution...");
+
+        // Generate VNC URL
+        const publicVncBase = process.env.PUBLIC_VNC_URL || "http://localhost:6080/vnc.html";
+        const vncUrl = `${publicVncBase}?autoconnect=true&resize=scale`;
+
+        if (HEADLESS) {
+          console.log(`[scraper] 🚨 ACTION REQUIRED: Please resolve the CAPTCHA at: ${vncUrl}`);
+        } else {
+          console.log(`[scraper] 🚨 ACTION REQUIRED: Please resolve the CAPTCHA in the opened Chrome window.`);
+        }
+        try {
+          await notifyCaptchaWebhook(vncUrl, url);
+        } catch (e) {
+          console.log("[scraper] Error calling webhook:", e);
+        }
+
+        const MAX_WAIT = 5 * 60 * 1000; // 5 minutes max wait
+        const challengeStart = Date.now();
+        let resolved = false;
+
+        while (Date.now() - challengeStart < MAX_WAIT) {
+          await page.waitForTimeout(2000);
+          let currentHtml: string;
+          try {
+            currentHtml = await page.content();
+          } catch {
+            continue; // Navigation in progress
+          }
+
+          if (!looksLikeChallenge(currentHtml)) {
+            console.log("[scraper] ✅ Challenge manually resolved!");
+            resolved = true;
+            html = currentHtml;
+            break;
+          }
+        }
+
+        if (!resolved) {
+          console.log("[scraper] ❌ Manual resolution timed out.");
+          botBlocked = true;
+        }
       }
     } else if (!isChallenged) {
       console.log("[scraper] Page loaded (no challenge).");

@@ -23,3 +23,5 @@ export const HEADLESS =
   (process.env.HEADLESS || "true").toLowerCase() === "true";
 
 export const BATCH_MAX_URLS = 10;
+
+export const TWO_CAPTCHA_API_KEY = process.env.TWO_CAPTCHA_API_KEY || "";
