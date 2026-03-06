@@ -14,8 +14,11 @@ RUN npm install
 # Copy application files
 COPY . .
 
+# Build the TypeScript files
+RUN npm run build
+
 # Expose API port
 EXPOSE 3000
 
 # Start server
-CMD ["node", "server.js"]
+CMD ["npm", "start"]

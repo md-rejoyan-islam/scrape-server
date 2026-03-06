@@ -1,20 +1,20 @@
-const express = require("express");
-const cors = require("cors");
-const puppeteer = require("puppeteer-extra");
-const StealthPlugin = require("puppeteer-extra-plugin-stealth");
-const cheerio = require("cheerio");
-const path = require("path");
+import * as cheerio from "cheerio";
+import cors from "cors";
+import express, { Request, Response } from "express";
+import path from "path";
+import puppeteerExtra from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
-puppeteer.use(StealthPlugin());
+puppeteerExtra.use(StealthPlugin());
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 // Serve static files from "public" directory
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(process.cwd(), "public")));
 
-app.post("/api/scrape", async (req, res) => {
+app.post("/api/scrape", async (req: Request, res: Response): Promise<any> => {
   const { url } = req.body;
 
   if (!url) {
@@ -28,7 +28,13 @@ app.post("/api/scrape", async (req, res) => {
     const { connect } = require("puppeteer-real-browser");
     const { browser, page } = await connect({
       headless: false,
-      args: [],
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--disable-gpu",
+      ],
       customConfig: {
         executablePath: puppeteer.executablePath(),
       },
@@ -83,7 +89,7 @@ app.post("/api/scrape", async (req, res) => {
       price,
       url,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Scraping error:", error);
     return res
       .status(500)
@@ -92,6 +98,6 @@ app.post("/api/scrape", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => {
+app.listen(PORT, () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`);
 });
