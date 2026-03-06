@@ -6,7 +6,7 @@ services:
     image: scraping-server
     container_name: scraper-bot
     ports:
-      - "3001:3000"
+      - "3000:3000"
     environment:
       - PORT=3000
       - CHROME_PATH=/usr/bin/google-chrome-stable
