@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Insight | Scrape Data</title>
+    <!-- Use Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #6c5ce7;
+        --secondary: #a29bfe;
+        --accent: #fd79a8;
+        --bg-base: #100c2a;
+        --bg-card: rgba(255, 255, 255, 0.05);
+        --text-light: #f8f9fa;
+        --text-muted: #adb5bd;
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --shadow-glow: 0 0 20px rgba(108, 92, 231, 0.4);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Outfit", sans-serif;
+        background-color: var(--bg-base);
+        background-image:
+          radial-gradient(
+            circle at 10% 20%,
+            rgba(108, 92, 231, 0.15) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 90% 80%,
+            rgba(253, 121, 168, 0.15) 0%,
+            transparent 40%
+          );
+        color: var(--text-light);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        overflow-x: hidden;
+      }
+
+      h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--secondary), var(--accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: var(--shadow-glow);
+        text-align: center;
+      }
+
+      p.subtitle {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        text-align: center;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        animation: fadeIn 1s ease-out;
+      }
+
+      .search-box {
+        display: flex;
+        gap: 1rem;
+        background: var(--bg-card);
+        padding: 0.5rem;
+        border-radius: 50px;
+        border: 1px solid var(--glass-border);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+
+      .search-box:focus-within {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-glow);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .search-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        padding: 1rem 1.5rem;
+        color: var(--text-light);
+        font-size: 1rem;
+        font-family: "Outfit", sans-serif;
+        outline: none;
+      }
+
+      .search-input::placeholder {
+        color: var(--text-muted);
+      }
+
+      .search-btn {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border: none;
+        padding: 0 2rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+        font-family: "Outfit", sans-serif;
+      }
+
+      .search-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(108, 92, 231, 0.5);
+      }
+
+      .search-btn:disabled {
+        background: var(--text-muted);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      /* Loading Spinner */
+      .spinner {
+        display: none;
+        width: 50px;
+        height: 50px;
+        border: 4px solid var(--glass-border);
+        border-top: 4px solid var(--accent);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 2rem auto;
+      }
+
+      /* Result Card */
+      .result-card {
+        display: none;
+        background: var(--bg-card);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        overflow: hidden;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: transform 0.3s ease;
+      }
+
+      .result-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .card-content {
+        display: flex;
+        flex-direction: column;
+      }
+
+      @media (min-width: 768px) {
+        .card-content {
+          flex-direction: row;
+        }
+      }
+
+      .card-image-wrapper {
+        flex: 1;
+        min-height: 250px;
+        background: rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .card-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        transition: transform 0.5s ease;
+      }
+
+      .result-card:hover .card-image {
+        transform: scale(1.05);
+      }
+
+      .card-details {
+        flex: 1.5;
+        padding: 2.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .card-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        line-height: 1.2;
+      }
+
+      .card-price {
+        font-size: 2rem;
+        color: var(--accent);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+      }
+
+      .card-desc {
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 2rem;
+        display: -webkit-box;
+        line-clamp: 4;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+
+      .error-msg {
+        display: none;
+        background: rgba(253, 121, 168, 0.1);
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        padding: 1rem;
+        border-radius: 12px;
+        text-align: center;
+        margin-top: 1rem;
+        animation: fadeIn 0.4s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div>
+        <h1>Product <span style="color: var(--text-light)">Insight</span></h1>
+        <p class="subtitle">
+          Extract data from e-commerce links (Bypasses Cloudflare & Bot
+          detections)
+        </p>
+      </div>
+
+      <form class="search-box" id="scrapeForm">
+        <input
+          type="url"
+          id="urlInput"
+          class="search-input"
+          placeholder="https://example.com/product/123"
+          required
+          autocomplete="off"
+        />
+        <button type="submit" class="search-btn" id="searchBtn">Extract</button>
+      </form>
+
+      <div class="spinner" id="spinner"></div>
+      <div class="error-msg" id="errorMsg">
+        Failed to extract data. Please check the URL or try again later.
+      </div>
+
+      <div class="result-card" id="resultCard">
+        <div class="card-content">
+          <div class="card-image-wrapper">
+            <img src="" alt="Product Image" class="card-image" id="cardImage" />
+          </div>
+          <div class="card-details">
+            <h2 class="card-title" id="cardTitle">Loading...</h2>
+            <div class="card-price" id="cardPrice">$0.00</div>
+            <p class="card-desc" id="cardDesc">Description goes here.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("scrapeForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const urlInput = document.getElementById("urlInput").value.trim();
+          if (!urlInput) return;
+
+          const btn = document.getElementById("searchBtn");
+          const spinner = document.getElementById("spinner");
+          const errorMsg = document.getElementById("errorMsg");
+          const resultCard = document.getElementById("resultCard");
+
+          btn.disabled = true;
+          btn.textContent = "Extracting...";
+          spinner.style.display = "block";
+          errorMsg.style.display = "none";
+          resultCard.style.display = "none";
+
+          try {
+            // Post request to our backend
+            const response = await fetch("/api/scrape", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ url: urlInput }),
+            });
+
+            if (!response.ok) {
+              throw new Error(`Error: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Populate product details
+            document.getElementById("cardTitle").textContent = data.title;
+            document.getElementById("cardPrice").textContent =
+              data.price && data.price !== "N/A"
+                ? data.price
+                : "Price not found";
+            document.getElementById("cardDesc").textContent =
+              data.description && data.description !== "N/A"
+                ? data.description
+                : "No description available.";
+
+            const imgElement = document.getElementById("cardImage");
+            if (data.image && data.image !== "N/A") {
+              imgElement.src = data.image;
+              imgElement.style.display = "block";
+            } else {
+              imgElement.style.display = "none";
+            }
+
+            // Show the card
+            resultCard.style.display = "block";
+          } catch (err) {
+            console.error(err);
+            errorMsg.style.display = "block";
+          } finally {
+            btn.disabled = false;
+            btn.textContent = "Extract";
+            spinner.style.display = "none";
+          }
+        });
+    </script>
+  </body>
+</html>

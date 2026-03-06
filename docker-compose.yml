@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  scraper:
+    build: .
+    image: scraping-server
+    container_name: scraper-bot
+    ports:
+      - "3001:3000"
+    environment:
+      - PORT=3000
+      - CHROME_PATH=/usr/bin/google-chrome-stable
+    restart: unless-stopped
+    shm_size: "2gb"  # Increased shared memory size to prevent Chrome crashes in Docker
