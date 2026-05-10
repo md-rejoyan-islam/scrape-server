@@ -1,17 +1,15 @@
-version: "3.8"
-
 services:
   scraper:
     build: .
     image: scraping-server
     container_name: scraper-bot
     ports:
-      - "3000:3000"
+      - "8090:8090"
     environment:
-      - PORT=3000
+      - PORT=8090
       - CHROME_PATH=/usr/bin/google-chrome-stable
       # Add your proxy URL here to bypass Cloudflare rate-limits on high-volume scraping!
       # Format: http://username:password@ip:port
       # - PROXY_URL=http://user:pass@proxy-server:8080
     restart: unless-stopped
-    shm_size: "2gb"  # Increased shared memory size to prevent Chrome crashes in Docker
+    shm_size: "2gb" # Increased shared memory size to prevent Chrome crashes in Docker

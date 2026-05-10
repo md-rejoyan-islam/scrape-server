@@ -3,7 +3,7 @@ import type { ExtractorName } from "../types/index.js";
 
 dotenv.config({ override: true });
 
-export const PORT = Number(process.env.PORT || 3010);
+export const PORT = Number(process.env.PORT || 8090);
 
 export const DEFAULT_EXTRACTORS: ExtractorName[] = [
   "links",

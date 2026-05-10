@@ -1,6 +1,9 @@
 # Dependency directories
 node_modules/
 
+# Build output
+dist/
+
 # Environment variables
 .env
 .env.local
@@ -35,3 +38,4 @@ downloaded_files/
 *.njsproj
 *.sln
 *.sw?
+.claude/

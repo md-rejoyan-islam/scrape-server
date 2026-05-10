@@ -25,7 +25,7 @@ export const scrapeBodySchema = z.object({
 
 export const batchBodySchema = z.object({
   urls: z
-    .array(z.string().url({ message: "Each URL must be valid" }))
+    .array(z.url({ message: "Each URL must be valid" }))
     .min(1, "At least one URL is required")
     .max(10, "Max 10 URLs per batch"),
   waitFor: z.number().int().min(0).max(60000).optional(),
