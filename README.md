@@ -9,9 +9,13 @@
 [![Express](https://img.shields.io/badge/Express-5.x-000?logo=express&logoColor=white)](https://expressjs.com/)
 [![Puppeteer](https://img.shields.io/badge/Puppeteer-24.x-40B5A4?logo=puppeteer&logoColor=white)](https://pptr.dev/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/license-ISC-blue.svg)](#-license)
+[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](#-license)
 
-[Quick start](#-quick-start) · [API reference](#-api-reference) · [Swagger UI](#-interactive-api-docs-swagger) · [Configuration](#%EF%B8%8F-configuration) · [Docker notes](#-docker-notes)
+[![Live Demo](https://img.shields.io/badge/▶_Live_Demo-scrape--server.rejoyan.me-5b9dff?logoColor=white)](https://scrape-server.rejoyan.me)
+
+🌐 **Live instance:** [**scrape-server.rejoyan.me**](https://scrape-server.rejoyan.me) · [Swagger docs](https://scrape-server.rejoyan.me/api-docs)
+
+[Quick start](#-quick-start) · [API reference](#-api-reference) · [Swagger UI](#-interactive-api-docs-swagger) · [Configuration](#%EF%B8%8F-configuration) · [Docker notes](#-docker-notes) · [License](#-license)
 
 </div>
 
@@ -352,10 +356,14 @@ Credentials are URL-decoded before being passed to Chrome.
 
 ## 📄 License
 
-Released under the **ISC** license.
+**© 2026 Rejoyan Islam. All Rights Reserved.**
+
+This project is **proprietary and source-available** — it is **not** open source. The code is published for reference and evaluation only. You may **not** copy, reproduce, modify, distribute, host, deploy, or create derivative works from any part of it without prior **written permission** from the author. See the full [`LICENSE`](LICENSE) for the exact terms.
+
+For licensing or permission inquiries: **perfectjillur@gmail.com**
 
 <div align="center">
 
-Made with 🕷️ + ☕ — built on [Bun](https://bun.sh/), [Express](https://expressjs.com/), and [Puppeteer](https://pptr.dev/).
+Made with 🕷️ + ☕ by [Rejoyan Islam](mailto:perfectjillur@gmail.com) — built on [Bun](https://bun.sh/), [Express](https://expressjs.com/), and [Puppeteer](https://pptr.dev/).
 
 </div>

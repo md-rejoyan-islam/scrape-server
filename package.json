@@ -1,16 +1,25 @@
 {
   "name": "scraping",
   "version": "1.0.0",
-  "description": "",
+  "description": "Web scraping API with anti-bot bypass and structured product extraction.",
+  "private": true,
+  "homepage": "https://scrape-server.rejoyan.me",
   "main": "index.js",
   "scripts": {
     "dev": "bun --watch src/server.ts",
     "build": "tsc",
     "start": "bun dist/src/server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "web-scraping",
+    "scraping-api",
+    "puppeteer",
+    "cloudflare-bypass",
+    "bun",
+    "typescript"
+  ],
+  "author": "Rejoyan Islam",
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
