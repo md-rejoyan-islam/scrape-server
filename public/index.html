@@ -16,7 +16,7 @@
     />
     <meta name="author" content="Rejoyan Islam" />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#0f1117" />
+    <meta name="theme-color" content="#0b0d12" />
     <link rel="canonical" href="https://scrape-server.rejoyan.me/" />
 
     <!-- ─── ICONS ───────────────────────────────────────────── -->
@@ -73,445 +73,513 @@
       }
     </script>
 
-    <style>
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
+    <!-- ─── FONTS ───────────────────────────────────────────── -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
 
-      body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        background: #0f1117;
-        color: #e1e4e8;
-        min-height: 100vh;
-      }
+    <!-- ─── TAILWIND CSS ────────────────────────────────────── -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              bg: "#0b0d12",
+              surface: "#12151c",
+              surface2: "#161a22",
+              elevated: "#1b202a",
+              bdr: "#232834",
+              bdr2: "#2c333f",
+              ink: "#e6e9ef",
+              muted: "#9aa4b2",
+              faint: "#6b7480",
+              brand: "#5b9dff",
+              brand2: "#b18cff",
+              ok: "#3fb950",
+            },
+            fontFamily: {
+              sans: ["Inter", "system-ui", "sans-serif"],
+              mono: ["JetBrains Mono", "ui-monospace", "monospace"],
+            },
+            boxShadow: {
+              panel:
+                "0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -8px rgba(0,0,0,0.5)",
+              glow: "0 6px 18px -6px rgba(91,157,255,0.6)",
+            },
+          },
+        },
+      };
+    </script>
 
-      .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 2rem 1.5rem;
-      }
-
-      header {
-        text-align: center;
-        margin-bottom: 2.5rem;
-      }
-
-      .brand {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.75rem;
-        margin-bottom: 0.5rem;
-      }
-
-      .brand img {
-        width: 48px;
-        height: 48px;
-        flex-shrink: 0;
-      }
-
-      header h1 {
-        font-size: 2.2rem;
-        background: linear-gradient(135deg, #58a6ff, #bc8cff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
-
-      header p {
-        color: #8b949e;
-        font-size: 1rem;
-      }
-
-      .input-section {
-        background: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-      }
-
-      .input-row {
-        display: flex;
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-      }
-
-      .input-row input[type="text"] {
-        flex: 1;
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
-        background: #0d1117;
-        border: 1px solid #30363d;
-        border-radius: 8px;
-        color: #e1e4e8;
-        outline: none;
-        transition: border-color 0.2s;
-      }
-
-      .input-row input:focus {
-        border-color: #58a6ff;
-      }
-
-      .btn {
-        padding: 0.75rem 1.5rem;
-        font-size: 1rem;
-        font-weight: 600;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-
-      .btn-primary {
-        background: linear-gradient(135deg, #238636, #2ea043);
-        color: #fff;
-      }
-
-      .btn-primary:hover {
-        opacity: 0.9;
-      }
-      .btn-primary:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      .btn-secondary {
-        background: #21262d;
-        color: #c9d1d9;
-        border: 1px solid #30363d;
-      }
-
-      .btn-secondary:hover {
-        border-color: #58a6ff;
-      }
-
-      .options {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        align-items: center;
-      }
-
-      .options label {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        font-size: 0.9rem;
-        color: #8b949e;
-        cursor: pointer;
-      }
-
-      .options label:hover {
-        color: #c9d1d9;
-      }
-
-      .options input[type="checkbox"] {
-        accent-color: #58a6ff;
-      }
-
-      .options input[type="number"] {
-        width: 80px;
-        padding: 0.35rem 0.5rem;
-        background: #0d1117;
-        border: 1px solid #30363d;
-        border-radius: 6px;
-        color: #e1e4e8;
-        font-size: 0.85rem;
-      }
-
-      .status-bar {
-        display: none;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 1rem;
-        background: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 10px;
-        margin-bottom: 1.5rem;
-      }
-
-      .status-bar.visible {
-        display: flex;
-      }
-
-      .spinner {
-        width: 20px;
-        height: 20px;
-        border: 3px solid #30363d;
-        border-top-color: #58a6ff;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
+    <style type="text/tailwindcss">
+      @layer base {
+        body {
+          background:
+            radial-gradient(
+              900px 500px at 80% -10%,
+              rgba(177, 140, 255, 0.08),
+              transparent 60%
+            ),
+            radial-gradient(
+              900px 500px at 0% 0%,
+              rgba(91, 157, 255, 0.08),
+              transparent 55%
+            ),
+            #0b0d12;
+        }
+        /* Styling for markup generated at runtime by the result renderers */
+        .tab-content table {
+          @apply w-full border-collapse text-sm;
+        }
+        .tab-content th,
+        .tab-content td {
+          @apply px-3.5 py-2.5 text-left align-top border-b border-bdr;
+        }
+        .tab-content th {
+          @apply font-semibold text-muted whitespace-nowrap;
+        }
+        .tab-content tr:last-child td,
+        .tab-content tr:last-child th {
+          @apply border-b-0;
+        }
+        .tab-content pre {
+          @apply font-mono text-[0.82rem] leading-relaxed whitespace-pre-wrap break-words text-[#c6cdda];
         }
       }
 
-      .status-text {
-        font-size: 0.9rem;
-        color: #8b949e;
-      }
-
-      .tabs {
-        display: flex;
-        gap: 0;
-        border-bottom: 1px solid #30363d;
-        margin-bottom: 1rem;
-        overflow-x: auto;
-      }
-
-      .tab {
-        padding: 0.65rem 1.2rem;
-        font-size: 0.9rem;
-        color: #8b949e;
-        background: none;
-        border: none;
-        border-bottom: 2px solid transparent;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: all 0.2s;
-      }
-
-      .tab:hover {
-        color: #c9d1d9;
-      }
-      .tab.active {
-        color: #58a6ff;
-        border-bottom-color: #58a6ff;
-      }
-
-      .tab-content {
-        display: none;
-        background: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 10px;
-        padding: 1.25rem;
-        overflow: auto;
-        max-height: 70vh;
-      }
-
-      .tab-content.active {
-        display: block;
-      }
-
-      pre {
-        font-size: 0.85rem;
-        line-height: 1.5;
-        white-space: pre-wrap;
-        word-break: break-word;
-        color: #c9d1d9;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.85rem;
-      }
-
-      th,
-      td {
-        padding: 0.5rem 0.75rem;
-        text-align: left;
-        border-bottom: 1px solid #21262d;
-      }
-
-      th {
-        color: #58a6ff;
-        font-weight: 600;
-      }
-
-      .tag {
-        display: inline-block;
-        padding: 0.2rem 0.5rem;
-        font-size: 0.75rem;
-        border-radius: 4px;
-        background: #1f6feb22;
-        color: #58a6ff;
-        margin: 0.15rem;
-      }
-
-      .stat-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 0.75rem;
-        margin-bottom: 1rem;
-      }
-
-      .stat-card {
-        background: #0d1117;
-        border: 1px solid #21262d;
-        border-radius: 8px;
-        padding: 1rem;
-        text-align: center;
-      }
-
-      .stat-card .value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #58a6ff;
-      }
-
-      .stat-card .label {
-        font-size: 0.8rem;
-        color: #8b949e;
-        margin-top: 0.25rem;
-      }
-
-      .screenshot-container img {
-        max-width: 100%;
-        border-radius: 8px;
-        border: 1px solid #30363d;
-      }
-
-      .api-docs {
-        background: #161b22;
-        border: 1px solid #30363d;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-top: 2rem;
-      }
-
-      .api-docs h2 {
-        font-size: 1.2rem;
-        color: #bc8cff;
-        margin-bottom: 1rem;
-      }
-
-      .endpoint {
-        background: #0d1117;
-        border: 1px solid #21262d;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-        font-family: monospace;
-        font-size: 0.85rem;
-      }
-
-      .method {
-        color: #3fb950;
-        font-weight: 700;
-      }
-      .path {
-        color: #58a6ff;
-      }
-      .desc {
-        color: #8b949e;
-        display: block;
-        margin-top: 0.3rem;
-        font-family: sans-serif;
+      @layer components {
+        .btn-secondary {
+          @apply bg-elevated text-ink border border-bdr2 rounded-lg px-3 py-2 text-sm font-semibold cursor-pointer transition hover:border-brand;
+        }
+        .stat-card {
+          @apply bg-surface border border-bdr rounded-lg px-4 py-4 transition hover:border-bdr2;
+        }
+        .stat-card .value {
+          @apply text-2xl font-bold text-ink tabular-nums;
+        }
+        .stat-card .label {
+          @apply mt-1 text-xs font-semibold uppercase tracking-wider text-faint;
+        }
+        .tab {
+          @apply -mb-px whitespace-nowrap border-b-2 border-transparent bg-transparent px-4 py-2.5 text-sm font-medium text-muted transition cursor-pointer hover:text-ink;
+        }
+        .tab.active {
+          @apply text-ink border-brand;
+        }
+        .tab-content {
+          @apply hidden max-h-[72vh] overflow-auto rounded-xl border border-bdr bg-surface p-6;
+        }
+        .tab-content.active {
+          @apply block;
+        }
+        .tag {
+          @apply m-0.5 inline-block rounded-md bg-brand/10 px-2 py-0.5 font-mono text-xs text-[#9ec3ff];
+        }
+        .screenshot-container img {
+          @apply max-w-full rounded-lg border border-bdr;
+        }
       }
     </style>
   </head>
-  <body>
-    <div class="container">
-      <header>
-        <div class="brand">
-          <img src="/logo.svg" alt="Scrape Server logo" width="48" height="48" />
-          <h1>Scrape Server</h1>
-        </div>
-        <p>
-          Free Apify-like web scraping — paste any URL and extract everything
-        </p>
-      </header>
 
-      <!-- Input -->
-      <div class="input-section">
-        <div class="input-row">
-          <input
-            type="text"
-            id="urlInput"
-            placeholder="https://example.com/product-page"
+  <body
+    class="min-h-screen bg-bg font-sans text-ink antialiased [letter-spacing:-0.01em]"
+  >
+    <!-- ─── NAVBAR ───────────────────────────────────────── -->
+    <nav
+      class="sticky top-0 z-50 border-b border-bdr bg-bg/70 backdrop-blur-md backdrop-saturate-150"
+    >
+      <div
+        class="mx-auto flex max-w-[1100px] items-center justify-between gap-4 px-6 py-3"
+      >
+        <a
+          href="/"
+          class="flex items-center gap-2.5 text-[1.02rem] font-bold text-ink"
+        >
+          <img
+            src="/logo.svg"
+            alt="Scrape Server logo"
+            class="h-[30px] w-[30px]"
           />
+          Scrape Server
+        </a>
+        <div class="flex items-center gap-1.5">
+          <a
+            href="#endpoints"
+            class="hidden rounded-lg px-3 py-2 text-sm font-medium text-muted transition hover:bg-surface2 hover:text-ink sm:block"
+            >API</a
+          >
+          <a
+            href="/api-docs"
+            class="rounded-lg border border-bdr2 bg-surface2 px-3 py-2 text-sm font-medium text-ink transition hover:border-brand"
+            >Swagger Docs ↗</a
+          >
+        </div>
+      </div>
+    </nav>
+
+    <div class="mx-auto max-w-[1100px] px-6">
+      <!-- ─── HERO ───────────────────────────────────────── -->
+      <section class="py-14 text-center sm:py-16">
+        <h1
+          class="mb-4 text-[clamp(2rem,5vw,3.1rem)] font-extrabold leading-[1.08] tracking-[-0.03em]"
+        >
+          Scrape any page into<br />
+          <span
+            class="bg-gradient-to-r from-brand to-brand2 bg-clip-text text-transparent"
+            >clean, structured data</span
+          >
+        </h1>
+        <p class="mx-auto max-w-[620px] text-[1.08rem] text-muted">
+          Paste a URL and pull metadata, products, links, images, prices,
+          tables, Markdown &amp; screenshots — with built-in Cloudflare anti-bot
+          bypass.
+        </p>
+      </section>
+
+      <!-- ─── INPUT PANEL ────────────────────────────────── -->
+      <div
+        class="rounded-2xl border border-bdr bg-gradient-to-b from-surface2 to-surface p-5 shadow-panel"
+      >
+        <div class="flex flex-col gap-2.5 sm:flex-row">
+          <div class="relative flex-1">
+            <span
+              class="pointer-events-none absolute left-4 top-1/2 flex -translate-y-1/2 text-faint"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18" />
+              </svg>
+            </span>
+            <input
+              type="text"
+              id="urlInput"
+              placeholder="https://example.com/product-page"
+              autocomplete="off"
+              spellcheck="false"
+              class="w-full rounded-lg border border-bdr2 bg-bg py-3 pl-11 pr-4 text-[0.98rem] text-ink outline-none transition placeholder:text-faint focus:border-brand focus:ring-4 focus:ring-brand/30"
+            />
+          </div>
           <button
-            class="btn btn-primary"
             id="scrapeBtn"
             onclick="startScrape()"
+            class="whitespace-nowrap rounded-lg bg-gradient-to-br from-[#2f6fed] to-brand px-6 py-3 text-[0.95rem] font-semibold text-white shadow-glow transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
           >
-            Scrape
+            Scrape →
           </button>
         </div>
-        <div class="options">
-          <label><input type="checkbox" id="optLinks" checked /> Links</label>
-          <label><input type="checkbox" id="optImages" checked /> Images</label>
-          <label
-            ><input type="checkbox" id="optHeadings" checked /> Headings</label
+
+        <div class="mt-[1.15rem] border-t border-bdr pt-[1.15rem]">
+          <div
+            class="mb-2.5 text-[0.78rem] font-semibold uppercase tracking-[0.08em] text-faint"
           >
-          <label><input type="checkbox" id="optText" checked /> Text</label>
-          <label><input type="checkbox" id="optPrices" checked /> Prices</label>
-          <label><input type="checkbox" id="optTables" checked /> Tables</label>
-          <label><input type="checkbox" id="optHtml" /> Full HTML</label>
-          <label><input type="checkbox" id="optScreenshot" /> Screenshot</label>
-          <label
-            >Wait (ms):
-            <input
-              type="number"
-              id="optWait"
-              value="3000"
-              min="0"
-              max="30000"
-              step="500"
-          /></label>
+            Extract
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <!-- chip template repeated; peer checkbox drives the tick + has-[] drives the pill -->
+            <label
+              class="group inline-flex cursor-pointer select-none items-center gap-2 rounded-full border border-bdr2 bg-bg px-3 py-1.5 text-sm font-medium text-muted transition hover:border-faint hover:text-ink focus-within:ring-4 focus-within:ring-brand/30 has-[:checked]:border-brand/60 has-[:checked]:bg-brand/10 has-[:checked]:text-[#cfe0ff]"
+            >
+              <input
+                type="checkbox"
+                id="optLinks"
+                checked
+                class="peer sr-only"
+              />
+              <span
+                class="grid h-[15px] w-[15px] place-items-center rounded border-[1.5px] border-bdr2 text-[10px] leading-none text-transparent transition peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white"
+                >✓</span
+              >
+              Links
+            </label>
+            <label
+              class="group inline-flex cursor-pointer select-none items-center gap-2 rounded-full border border-bdr2 bg-bg px-3 py-1.5 text-sm font-medium text-muted transition hover:border-faint hover:text-ink focus-within:ring-4 focus-within:ring-brand/30 has-[:checked]:border-brand/60 has-[:checked]:bg-brand/10 has-[:checked]:text-[#cfe0ff]"
+            >
+              <input
+                type="checkbox"
+                id="optImages"
+                checked
+                class="peer sr-only"
+              />
+              <span
+                class="grid h-[15px] w-[15px] place-items-center rounded border-[1.5px] border-bdr2 text-[10px] leading-none text-transparent transition peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white"
+                >✓</span
+              >
+              Images
+            </label>
+            <label
+              class="group inline-flex cursor-pointer select-none items-center gap-2 rounded-full border border-bdr2 bg-bg px-3 py-1.5 text-sm font-medium text-muted transition hover:border-faint hover:text-ink focus-within:ring-4 focus-within:ring-brand/30 has-[:checked]:border-brand/60 has-[:checked]:bg-brand/10 has-[:checked]:text-[#cfe0ff]"
+            >
+              <input
+                type="checkbox"
+                id="optHeadings"
+                checked
+                class="peer sr-only"
+              />
+              <span
+                class="grid h-[15px] w-[15px] place-items-center rounded border-[1.5px] border-bdr2 text-[10px] leading-none text-transparent transition peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white"
+                >✓</span
+              >
+              Headings
+            </label>
+            <label
+              class="group inline-flex cursor-pointer select-none items-center gap-2 rounded-full border border-bdr2 bg-bg px-3 py-1.5 text-sm font-medium text-muted transition hover:border-faint hover:text-ink focus-within:ring-4 focus-within:ring-brand/30 has-[:checked]:border-brand/60 has-[:checked]:bg-brand/10 has-[:checked]:text-[#cfe0ff]"
+            >
+              <input
+                type="checkbox"
+                id="optText"
+                checked
+                class="peer sr-only"
+              />
+              <span
+                class="grid h-[15px] w-[15px] place-items-center rounded border-[1.5px] border-bdr2 text-[10px] leading-none text-transparent transition peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white"
+                >✓</span
+              >
+              Text
+            </label>
+            <label
+              class="group inline-flex cursor-pointer select-none items-center gap-2 rounded-full border border-bdr2 bg-bg px-3 py-1.5 text-sm font-medium text-muted transition hover:border-faint hover:text-ink focus-within:ring-4 focus-within:ring-brand/30 has-[:checked]:border-brand/60 has-[:checked]:bg-brand/10 has-[:checked]:text-[#cfe0ff]"
+            >
+              <input
+                type="checkbox"
+                id="optPrices"
+                checked
+                class="peer sr-only"
+              />
+              <span
+                class="grid h-[15px] w-[15px] place-items-center rounded border-[1.5px] border-bdr2 text-[10px] leading-none text-transparent transition peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white"
+                >✓</span
+              >
+              Prices
+            </label>
+            <label
+              class="group inline-flex cursor-pointer select-none items-center gap-2 rounded-full border border-bdr2 bg-bg px-3 py-1.5 text-sm font-medium text-muted transition hover:border-faint hover:text-ink focus-within:ring-4 focus-within:ring-brand/30 has-[:checked]:border-brand/60 has-[:checked]:bg-brand/10 has-[:checked]:text-[#cfe0ff]"
+            >
+              <input
+                type="checkbox"
+                id="optTables"
+                checked
+                class="peer sr-only"
+              />
+              <span
+                class="grid h-[15px] w-[15px] place-items-center rounded border-[1.5px] border-bdr2 text-[10px] leading-none text-transparent transition peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white"
+                >✓</span
+              >
+              Tables
+            </label>
+            <label
+              class="group inline-flex cursor-pointer select-none items-center gap-2 rounded-full border border-bdr2 bg-bg px-3 py-1.5 text-sm font-medium text-muted transition hover:border-faint hover:text-ink focus-within:ring-4 focus-within:ring-brand/30 has-[:checked]:border-brand/60 has-[:checked]:bg-brand/10 has-[:checked]:text-[#cfe0ff]"
+            >
+              <input type="checkbox" id="optHtml" class="peer sr-only" />
+              <span
+                class="grid h-[15px] w-[15px] place-items-center rounded border-[1.5px] border-bdr2 text-[10px] leading-none text-transparent transition peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white"
+                >✓</span
+              >
+              Full HTML
+            </label>
+            <label
+              class="group inline-flex cursor-pointer select-none items-center gap-2 rounded-full border border-bdr2 bg-bg px-3 py-1.5 text-sm font-medium text-muted transition hover:border-faint hover:text-ink focus-within:ring-4 focus-within:ring-brand/30 has-[:checked]:border-brand/60 has-[:checked]:bg-brand/10 has-[:checked]:text-[#cfe0ff]"
+            >
+              <input type="checkbox" id="optScreenshot" class="peer sr-only" />
+              <span
+                class="grid h-[15px] w-[15px] place-items-center rounded border-[1.5px] border-bdr2 text-[10px] leading-none text-transparent transition peer-checked:border-brand peer-checked:bg-brand peer-checked:text-white"
+                >✓</span
+              >
+              Screenshot
+            </label>
+          </div>
+
+          <div class="mt-4 flex flex-wrap items-center gap-5">
+            <div class="flex items-center gap-2 text-sm text-muted">
+              <span>Wait before capture</span>
+              <input
+                type="number"
+                id="optWait"
+                value="3000"
+                min="0"
+                max="30000"
+                step="500"
+                class="w-[92px] rounded-md border border-bdr2 bg-bg px-2.5 py-1.5 font-mono text-[0.82rem] text-ink outline-none focus:border-brand"
+              />
+              <span>ms</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Status -->
-      <div class="status-bar" id="statusBar">
-        <div class="spinner"></div>
-        <span class="status-text" id="statusText">Scraping...</span>
+      <!-- ─── STATUS ─────────────────────────────────────── -->
+      <div
+        id="statusBar"
+        class="mt-5 hidden items-center gap-3 rounded-lg border border-bdr bg-surface2 px-[1.15rem] py-[0.95rem] [&.visible]:flex"
+      >
+        <div
+          class="h-[18px] w-[18px] shrink-0 animate-spin rounded-full border-[2.5px] border-bdr2 border-t-brand"
+        ></div>
+        <span class="text-sm text-muted" id="statusText">Scraping...</span>
       </div>
 
-      <!-- Results -->
-      <div id="results" style="display: none">
-        <div class="stat-cards" id="statCards"></div>
-
-        <div class="tabs" id="tabsBar"></div>
+      <!-- ─── RESULTS ────────────────────────────────────── -->
+      <div id="results" class="mt-7" style="display: none">
+        <div
+          id="statCards"
+          class="mb-5 grid grid-cols-[repeat(auto-fit,minmax(132px,1fr))] gap-2.5"
+        ></div>
+        <div
+          id="tabsBar"
+          class="mb-[1.1rem] flex gap-0.5 overflow-x-auto border-b border-bdr"
+        ></div>
         <div id="tabContents"></div>
       </div>
 
-      <!-- API Docs -->
-      <div class="api-docs">
-        <h2>API Endpoints</h2>
-        <div class="endpoint">
-          <span class="method">POST</span> <span class="path">/api/scrape</span>
-          <span class="desc"
-            >Synchronous scrape. Body: { "url": "...", "extractors": [...],
-            "waitFor": 3000, "fullHtml": false, "screenshot": false }</span
+      <!-- ─── API DOCS ───────────────────────────────────── -->
+      <section id="endpoints">
+        <div
+          class="mb-[1.1rem] mt-12 flex items-baseline justify-between gap-4"
+        >
+          <h2 class="text-[1.3rem] font-bold tracking-[-0.02em]">
+            API Endpoints
+          </h2>
+          <p class="hidden text-[0.88rem] text-faint sm:block">
+            Everything the UI does is available over a simple REST API.
+          </p>
+        </div>
+        <div class="grid gap-2.5">
+          <div
+            class="flex items-start gap-3.5 rounded-lg border border-bdr bg-surface px-[1.05rem] py-[0.9rem] transition hover:border-bdr2"
           >
-        </div>
-        <div class="endpoint">
-          <span class="method">POST</span>
-          <span class="path">/api/scrape/async</span>
-          <span class="desc"
-            >Async scrape. Returns jobId. Poll /api/jobs/:jobId for
-            results.</span
+            <span
+              class="min-w-[52px] shrink-0 rounded-md bg-ok/15 py-1 text-center font-mono text-[0.72rem] font-bold tracking-wide text-[#5ee08a]"
+              >POST</span
+            >
+            <div class="min-w-0">
+              <span class="font-mono text-[0.9rem] font-medium text-ink"
+                >/api/scrape</span
+              >
+              <span class="mt-1 block text-[0.85rem] text-muted"
+                >Synchronous scrape. Body:
+                <code
+                  class="rounded bg-bg px-1.5 py-0.5 font-mono text-[0.8rem] text-[#c6cdda]"
+                  >{ "url", "extractors", "waitFor", "fullHtml", "screenshot"
+                  }</code
+                ></span
+              >
+            </div>
+          </div>
+          <div
+            class="flex items-start gap-3.5 rounded-lg border border-bdr bg-surface px-[1.05rem] py-[0.9rem] transition hover:border-bdr2"
           >
-        </div>
-        <div class="endpoint">
-          <span class="method">POST</span>
-          <span class="path">/api/scrape/batch</span>
-          <span class="desc"
-            >Batch scrape up to 10 URLs. Body: { "urls": ["...", "..."] }</span
+            <span
+              class="min-w-[52px] shrink-0 rounded-md bg-ok/15 py-1 text-center font-mono text-[0.72rem] font-bold tracking-wide text-[#5ee08a]"
+              >POST</span
+            >
+            <div class="min-w-0">
+              <span class="font-mono text-[0.9rem] font-medium text-ink"
+                >/api/scrape/async</span
+              >
+              <span class="mt-1 block text-[0.85rem] text-muted"
+                >Async scrape. Returns a
+                <code
+                  class="rounded bg-bg px-1.5 py-0.5 font-mono text-[0.8rem] text-[#c6cdda]"
+                  >jobId</code
+                >
+                — poll
+                <code
+                  class="rounded bg-bg px-1.5 py-0.5 font-mono text-[0.8rem] text-[#c6cdda]"
+                  >/api/jobs/:jobId</code
+                >
+                for results.</span
+              >
+            </div>
+          </div>
+          <div
+            class="flex items-start gap-3.5 rounded-lg border border-bdr bg-surface px-[1.05rem] py-[0.9rem] transition hover:border-bdr2"
           >
+            <span
+              class="min-w-[52px] shrink-0 rounded-md bg-ok/15 py-1 text-center font-mono text-[0.72rem] font-bold tracking-wide text-[#5ee08a]"
+              >POST</span
+            >
+            <div class="min-w-0">
+              <span class="font-mono text-[0.9rem] font-medium text-ink"
+                >/api/scrape/batch</span
+              >
+              <span class="mt-1 block text-[0.85rem] text-muted"
+                >Batch scrape up to 10 URLs. Body:
+                <code
+                  class="rounded bg-bg px-1.5 py-0.5 font-mono text-[0.8rem] text-[#c6cdda]"
+                  >{ "urls": ["...", "..."] }</code
+                ></span
+              >
+            </div>
+          </div>
+          <div
+            class="flex items-start gap-3.5 rounded-lg border border-bdr bg-surface px-[1.05rem] py-[0.9rem] transition hover:border-bdr2"
+          >
+            <span
+              class="min-w-[52px] shrink-0 rounded-md bg-brand/15 py-1 text-center font-mono text-[0.72rem] font-bold tracking-wide text-[#6cc8ff]"
+              >GET</span
+            >
+            <div class="min-w-0">
+              <span class="font-mono text-[0.9rem] font-medium text-ink"
+                >/api/jobs/:jobId</span
+              >
+              <span class="mt-1 block text-[0.85rem] text-muted"
+                >Fetch the result of an async job.</span
+              >
+            </div>
+          </div>
+          <div
+            class="flex items-start gap-3.5 rounded-lg border border-bdr bg-surface px-[1.05rem] py-[0.9rem] transition hover:border-bdr2"
+          >
+            <span
+              class="min-w-[52px] shrink-0 rounded-md bg-brand/15 py-1 text-center font-mono text-[0.72rem] font-bold tracking-wide text-[#6cc8ff]"
+              >GET</span
+            >
+            <div class="min-w-0">
+              <span class="font-mono text-[0.9rem] font-medium text-ink"
+                >/api/jobs</span
+              >
+              <span class="mt-1 block text-[0.85rem] text-muted"
+                >List all jobs.</span
+              >
+            </div>
+          </div>
+          <div
+            class="flex items-start gap-3.5 rounded-lg border border-bdr bg-surface px-[1.05rem] py-[0.9rem] transition hover:border-bdr2"
+          >
+            <span
+              class="min-w-[52px] shrink-0 rounded-md bg-brand/15 py-1 text-center font-mono text-[0.72rem] font-bold tracking-wide text-[#6cc8ff]"
+              >GET</span
+            >
+            <div class="min-w-0">
+              <span class="font-mono text-[0.9rem] font-medium text-ink"
+                >/api/health</span
+              >
+              <span class="mt-1 block text-[0.85rem] text-muted"
+                >Service health check &amp; uptime.</span
+              >
+            </div>
+          </div>
         </div>
-        <div class="endpoint">
-          <span class="method">GET</span>
-          <span class="path">/api/jobs/:jobId</span>
-          <span class="desc">Get async job result.</span>
-        </div>
-        <div class="endpoint">
-          <span class="method">GET</span> <span class="path">/api/jobs</span>
-          <span class="desc">List all jobs.</span>
-        </div>
-        <div class="endpoint">
-          <span class="method">GET</span> <span class="path">/api/health</span>
-          <span class="desc">Health check.</span>
-        </div>
-      </div>
+      </section>
+
+      <footer
+        class="mt-16 border-t border-bdr py-8 text-center text-[0.85rem] text-faint"
+      >
+        Scrape Server · Built with Bun, Express &amp; Puppeteer ·
+        <a href="/api-docs" class="text-muted hover:text-ink">Swagger Docs</a>
+      </footer>
     </div>
 
     <script>
@@ -743,7 +811,7 @@
 
       function renderOverview(data) {
         let html = `<table>`;
-        html += `<tr><th>URL</th><td><a href="${data.url}" target="_blank" style="color:#58a6ff">${data.url}</a></td></tr>`;
+        html += `<tr><th>URL</th><td><a href="${data.url}" target="_blank" style="color:#5b9dff">${data.url}</a></td></tr>`;
         if (data.metadata) {
           html += `<tr><th>Title</th><td>${escapeHtml(data.metadata.title || "")}</td></tr>`;
         }
@@ -784,26 +852,26 @@
         html += `<tr><th>Robots</th><td>${escapeHtml(meta.robots || "—")}</td></tr>`;
         html += `<tr><th>Favicon</th><td>${escapeHtml(meta.favicon || "")}</td></tr>`;
         if (meta.openGraph) {
-          html += `<tr><th colspan="2" style="color:#bc8cff;padding-top:1rem">Open Graph</th></tr>`;
+          html += `<tr><th colspan="2" style="color:#b18cff;padding-top:1rem">Open Graph</th></tr>`;
           for (const [k, v] of Object.entries(meta.openGraph)) {
             html += `<tr><th>og:${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`;
           }
         }
         if (meta.twitter) {
-          html += `<tr><th colspan="2" style="color:#bc8cff;padding-top:1rem">Twitter Card</th></tr>`;
+          html += `<tr><th colspan="2" style="color:#b18cff;padding-top:1rem">Twitter Card</th></tr>`;
           for (const [k, v] of Object.entries(meta.twitter)) {
             html += `<tr><th>twitter:${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`;
           }
         }
         if (meta.microdata && meta.microdata.length > 0) {
-          html += `<tr><th colspan="2" style="color:#bc8cff;padding-top:1rem">Microdata (${meta.microdata.length})</th></tr>`;
+          html += `<tr><th colspan="2" style="color:#b18cff;padding-top:1rem">Microdata (${meta.microdata.length})</th></tr>`;
           meta.microdata.forEach((item, i) => {
             html += `<tr><th>itemtype #${i + 1}</th><td>${escapeHtml(item.itemtype || "")}</td></tr>`;
           });
         }
         html += `</table>`;
         if (meta.allMeta && meta.allMeta.length > 0) {
-          html += `<h3 style="color:#bc8cff;margin:1rem 0 0.5rem;">All Meta Tags (${meta.allMeta.length})</h3>`;
+          html += `<h3 style="color:#b18cff;margin:1rem 0 0.5rem;">All Meta Tags (${meta.allMeta.length})</h3>`;
           html += renderJSON(meta.allMeta);
         }
         return html;
@@ -816,7 +884,7 @@
       function renderHeaders(headers) {
         let html = `<table><tr><th>Header</th><th>Value</th></tr>`;
         for (const [key, value] of Object.entries(headers)) {
-          html += `<tr><td style="color:#58a6ff;font-family:monospace">${escapeHtml(key)}</td><td style="word-break:break-all">${escapeHtml(String(value))}</td></tr>`;
+          html += `<tr><td style="color:#5b9dff;font-family:'JetBrains Mono',monospace">${escapeHtml(key)}</td><td style="word-break:break-all">${escapeHtml(String(value))}</td></tr>`;
         }
         html += `</table>`;
         return html;
@@ -841,7 +909,7 @@
       function renderLinks(links) {
         let html = `<table><tr><th>Text</th><th>URL</th><th>External</th></tr>`;
         links.items.slice(0, 200).forEach((l) => {
-          html += `<tr><td>${escapeHtml(l.text.substring(0, 60))}</td><td style="max-width:400px;overflow:hidden;text-overflow:ellipsis"><a href="${l.href}" target="_blank" style="color:#58a6ff;font-size:0.8rem">${escapeHtml(l.href.substring(0, 80))}</a></td><td>${l.isExternal ? "Yes" : "No"}</td></tr>`;
+          html += `<tr><td>${escapeHtml(l.text.substring(0, 60))}</td><td style="max-width:400px;overflow:hidden;text-overflow:ellipsis"><a href="${l.href}" target="_blank" style="color:#5b9dff;font-size:0.8rem">${escapeHtml(l.href.substring(0, 80))}</a></td><td>${l.isExternal ? "Yes" : "No"}</td></tr>`;
         });
         html += `</table>`;
         return html;
@@ -850,9 +918,9 @@
       function renderImages(images) {
         let html = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.75rem;">`;
         images.items.slice(0, 50).forEach((img) => {
-          html += `<div style="background:#0d1117;border-radius:8px;overflow:hidden;border:1px solid #21262d;">
+          html += `<div style="background:#0b0d12;border-radius:8px;overflow:hidden;border:1px solid #232834;">
           <img src="${img.src}" alt="${escapeHtml(img.alt)}" style="width:100%;height:120px;object-fit:cover;" loading="lazy" onerror="this.style.display='none'" />
-          <div style="padding:0.4rem;font-size:0.7rem;color:#8b949e;word-break:break-all">${escapeHtml(img.alt || img.src.split("/").pop())}</div>
+          <div style="padding:0.4rem;font-size:0.7rem;color:#9aa4b2;word-break:break-all">${escapeHtml(img.alt || img.src.split("/").pop())}</div>
         </div>`;
         });
         html += `</div>`;
@@ -860,12 +928,12 @@
       }
 
       function renderText(text) {
-        let html = `<p style="color:#8b949e;margin-bottom:1rem;">Body length: ${text.bodyTextLength} chars</p>`;
-        html += `<h3 style="color:#bc8cff;margin:1rem 0 0.5rem;">Preview</h3><pre>${escapeHtml(text.bodyTextPreview)}</pre>`;
+        let html = `<p style="color:#9aa4b2;margin-bottom:1rem;">Body length: ${text.bodyTextLength} chars</p>`;
+        html += `<h3 style="color:#b18cff;margin:1rem 0 0.5rem;">Preview</h3><pre>${escapeHtml(text.bodyTextPreview)}</pre>`;
         if (text.paragraphs.length > 0) {
-          html += `<h3 style="color:#bc8cff;margin:1rem 0 0.5rem;">Paragraphs (${text.paragraphs.length})</h3>`;
+          html += `<h3 style="color:#b18cff;margin:1rem 0 0.5rem;">Paragraphs (${text.paragraphs.length})</h3>`;
           text.paragraphs.forEach((p) => {
-            html += `<p style="margin:0.5rem 0;color:#c9d1d9">${escapeHtml(p)}</p>`;
+            html += `<p style="margin:0.5rem 0;color:#c6cdda">${escapeHtml(p)}</p>`;
           });
         }
         return html;
@@ -883,31 +951,31 @@
         html += `<tr><th>Language</th><td>${escapeHtml(product.languageCode || "—")}</td></tr>`;
         html += `<tr><th>Weight</th><td>${escapeHtml(product.productWeight || "—")}</td></tr>`;
         html += `<tr><th>In Stock</th><td>${product.productInStock === true ? "✅ Yes" : product.productInStock === false ? "❌ No" : "—"}</td></tr>`;
-        html += `<tr><th>URL</th><td><a href="${product.productUrl || ""}" target="_blank" style="color:#58a6ff">${escapeHtml(product.productUrl || "—")}</a></td></tr>`;
+        html += `<tr><th>URL</th><td><a href="${product.productUrl || ""}" target="_blank" style="color:#5b9dff">${escapeHtml(product.productUrl || "—")}</a></td></tr>`;
 
         if (product.priceTry) {
-          html += `<tr><th colspan="2" style="color:#bc8cff;padding-top:1rem">Pricing (${escapeHtml(product.priceTry.currency)})</th></tr>`;
+          html += `<tr><th colspan="2" style="color:#b18cff;padding-top:1rem">Pricing (${escapeHtml(product.priceTry.currency)})</th></tr>`;
           html += `<tr><th>Regular Price</th><td>${product.priceTry.productRegularPrice ?? "—"}</td></tr>`;
           html += `<tr><th>Sell Price</th><td style="color:#3fb950;font-weight:700">${product.priceTry.productSellPrice ?? "—"}</td></tr>`;
         }
 
-        html += `<tr><th colspan="2" style="color:#bc8cff;padding-top:1rem">Description</th></tr>`;
+        html += `<tr><th colspan="2" style="color:#b18cff;padding-top:1rem">Description</th></tr>`;
         html += `<tr><td colspan="2" style="white-space:pre-wrap">${escapeHtml(product.productDescription || "—")}</td></tr>`;
 
         if (product.productFeatures) {
-          html += `<tr><th colspan="2" style="color:#bc8cff;padding-top:1rem">Features</th></tr>`;
+          html += `<tr><th colspan="2" style="color:#b18cff;padding-top:1rem">Features</th></tr>`;
           html += `<tr><td colspan="2">${escapeHtml(product.productFeatures)}</td></tr>`;
         }
         html += `</table>`;
 
         // Images
         if (product.productImagelinks && product.productImagelinks.length > 0) {
-          html += `<h3 style="color:#bc8cff;margin:1.5rem 0 0.75rem">Product Images (${product.productImagelinks.length})</h3>`;
+          html += `<h3 style="color:#b18cff;margin:1.5rem 0 0.75rem">Product Images (${product.productImagelinks.length})</h3>`;
           html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:0.75rem;">`;
           product.productImagelinks.forEach((src) => {
-            html += `<div style="background:#0d1117;border-radius:8px;overflow:hidden;border:1px solid #21262d;">
+            html += `<div style="background:#0b0d12;border-radius:8px;overflow:hidden;border:1px solid #232834;">
               <img src="${src}" style="width:100%;height:120px;object-fit:cover;" loading="lazy" onerror="this.style.display='none'" />
-              <div style="padding:0.4rem;font-size:0.65rem;color:#8b949e;word-break:break-all">${escapeHtml(src.split("/").pop())}</div>
+              <div style="padding:0.4rem;font-size:0.65rem;color:#9aa4b2;word-break:break-all">${escapeHtml(src.split("/").pop())}</div>
             </div>`;
           });
           html += `</div>`;
@@ -915,7 +983,7 @@
 
         // Variants
         if (product.variants && product.variants.length > 0) {
-          html += `<h3 style="color:#bc8cff;margin:1.5rem 0 0.75rem">Variants (${product.variants.length})</h3>`;
+          html += `<h3 style="color:#b18cff;margin:1.5rem 0 0.75rem">Variants (${product.variants.length})</h3>`;
           html += `<div style="overflow-x:auto;"><table>`;
           html += `<tr><th>Option</th><th>Value</th><th>Price</th><th>Compare At</th><th>SKU</th><th>Weight</th><th>Size</th><th>In Stock</th><th>Image</th></tr>`;
           product.variants.forEach((v) => {
@@ -935,7 +1003,7 @@
         }
 
         // Raw product JSON
-        html += `<h3 style="color:#bc8cff;margin:1.5rem 0 0.75rem">Raw Product JSON</h3>`;
+        html += `<h3 style="color:#b18cff;margin:1.5rem 0 0.75rem">Raw Product JSON</h3>`;
         html += `<div style="position:relative"><button class="btn btn-secondary" style="position:absolute;top:0;right:0;font-size:0.75rem;padding:0.4rem 0.8rem" onclick="copyJSON(this)">Copy</button><pre>${escapeHtml(JSON.stringify(product, null, 2))}</pre></div>`;
 
         return html;
