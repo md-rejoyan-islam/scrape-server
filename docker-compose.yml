@@ -3,13 +3,26 @@ services:
     build: .
     image: scraping-server
     container_name: scraper-bot
-    ports:
-      - "8090:8090"
     environment:
       - PORT=8090
-      - CHROME_PATH=/usr/bin/google-chrome-stable
       # Add your proxy URL here to bypass Cloudflare rate-limits on high-volume scraping!
       # Format: http://username:password@ip:port
       # - PROXY_URL=http://user:pass@proxy-server:8080
     restart: unless-stopped
     shm_size: "2gb" # Increased shared memory size to prevent Chrome crashes in Docker
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      # ── Replace scraper.example.com with YOUR domain (set in Dokploy) ──
+      - "traefik.http.routers.scraper.rule=Host(`scraping.rejoyan.me`)"
+      - "traefik.http.routers.scraper.entrypoints=websecure"
+      - "traefik.http.routers.scraper.tls.certresolver=letsencrypt"
+      # ── This is the key fix: tell Traefik the app listens on 8090 ──
+      - "traefik.http.services.scraper.loadbalancer.server.port=8090"
+
+# Dokploy's Traefik runs on this shared external network. The container
+# MUST join it for the reverse proxy to reach it (otherwise → 404).
+networks:
+  dokploy-network:
+    external: true
