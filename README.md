@@ -1,104 +1,149 @@
-# Scraping Server
+<div align="center">
 
-A production-ready web scraping API built with **Express 5**, **TypeScript**, and **Puppeteer** (with Cloudflare/Turnstile bypass via `puppeteer-real-browser`). Runs on **[Bun](https://bun.sh/)**.
+# 🕷️ Scraping Server
 
-Scrapes any URL and returns structured data: metadata, headings, links, images, prices, tables, full HTML, readable article HTML, Markdown, and a screenshot — plus a normalized `product` object built from JSON-LD / microdata for e-commerce pages.
+**A production-grade web scraping API with anti-bot bypass, structured product extraction, and OpenAPI docs.**
 
----
+[![Bun](https://img.shields.io/badge/Bun-1.3+-000?logo=bun&logoColor=fbf0df)](https://bun.sh/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Express](https://img.shields.io/badge/Express-5.x-000?logo=express&logoColor=white)](https://expressjs.com/)
+[![Puppeteer](https://img.shields.io/badge/Puppeteer-24.x-40B5A4?logo=puppeteer&logoColor=white)](https://pptr.dev/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/license-ISC-blue.svg)](#-license)
 
-## Features
+[Quick start](#-quick-start) · [API reference](#-api-reference) · [Swagger UI](#-interactive-api-docs-swagger) · [Configuration](#%EF%B8%8F-configuration) · [Docker notes](#-docker-notes)
 
-- **Synchronous, async (job-based), and batch** scrape endpoints
-- **Anti-bot bypass** — Cloudflare Turnstile / generic bot challenges via puppeteer-real-browser + stealth plugin
-- **Structured product extraction** — JSON-LD, microdata, OpenGraph, variants, prices, stock
-- **Multiple extractors** — links, images, headings, text, prices, tables (opt-in)
-- **Readability + Markdown** — readable HTML and Markdown of the article body
-- **Screenshots** — base64-encoded PNG
-- **Swagger UI** at `/api-docs`
-- **Web UI** at `/` (static playground)
-- **Field filtering** via `?fields=` query for trimmed responses
-- **Docker-ready** with bundled Xvfb for headful Chrome in containers
-- **Zod-validated** request bodies
+</div>
 
 ---
 
-## Quick start
+## ✨ Highlights
 
-### Option A — Run with Docker (recommended)
+| | |
+|---|---|
+| 🛡️ **Anti-bot bypass** | Cloudflare Turnstile & generic challenges via [`puppeteer-real-browser`](https://www.npmjs.com/package/puppeteer-real-browser) + stealth plugin |
+| 🛒 **Structured product data** | Normalized output from JSON-LD, microdata, OpenGraph — including variants, prices, stock |
+| 🧩 **Pluggable extractors** | `links`, `images`, `headings`, `text`, `prices`, `tables` — opt in per request |
+| 📜 **Readability & Markdown** | Clean article HTML and Markdown output via Mozilla Readability + Turndown |
+| 📸 **Screenshots** | Base64-encoded PNG of the rendered page |
+| ⚡ **Three execution modes** | Synchronous, async (job-based), and parallel batch (up to 10 URLs) |
+| 📚 **Swagger UI** | Interactive OpenAPI 3 docs at `/api-docs` |
+| 🎯 **Field projection** | `?fields=a,b,c` to trim responses |
+| 🐳 **Docker-native** | One-command bring-up with bundled Xvfb for headful Chrome |
+| ✅ **Type-safe inputs** | Zod-validated request bodies |
+
+---
+
+## 🚀 Quick start
+
+### 🐳 Option A — Docker (recommended)
 
 ```bash
 docker compose up --build
 ```
 
-Open:
-- UI: http://localhost:8090
-- Swagger: http://localhost:8090/api-docs
-- API: http://localhost:8090/api
+That's it. After ~2 minutes (first build):
 
-Stop:
+| | |
+|---|---|
+| 🖥️ **Web UI** | http://localhost:8090 |
+| 📖 **Swagger docs** | http://localhost:8090/api-docs |
+| 📡 **API base** | http://localhost:8090/api |
+| ❤️ **Health** | http://localhost:8090/api/health |
+
+Stop the stack:
 ```bash
 docker compose down
 ```
 
-### Option B — Run locally with Bun
+### 💻 Option B — Local with Bun
 
-Prerequisites:
-- [Bun](https://bun.sh/) `>= 1.3`
-- Chrome/Chromium installed (puppeteer will download it on first install)
+**Prerequisites:** [Bun](https://bun.sh/) `>= 1.3` and a modern Chrome/Chromium (Puppeteer downloads one on first install).
 
 ```bash
 bun install
-bun run dev      # dev mode with watch
-# or
-bun run build    # compile TypeScript to dist/
-bun run start    # run the compiled output
+bun run dev       # watch mode — auto-reload on changes
+```
+
+Build & run the compiled output:
+```bash
+bun run build     # tsc → dist/
+bun run start     # bun dist/src/server.js
 ```
 
 ---
 
-## Configuration
+## 📖 Interactive API docs (Swagger)
 
-All configuration is via environment variables (a `.env` file in the project root is auto-loaded in local dev; for Docker, set them in `docker-compose.yml`).
+The full OpenAPI 3 specification lives at [`docs/swagger.yaml`](docs/swagger.yaml) and is **rendered as interactive Swagger UI** once the server is running:
 
-| Variable             | Default | Description                                                                                  |
-| -------------------- | ------- | -------------------------------------------------------------------------------------------- |
-| `PORT`               | `8090`  | HTTP port the server listens on.                                                             |
-| `HEADLESS`           | `true`  | Run Chrome headless. (Currently informational — `puppeteer-real-browser` is always headful.) |
-| `BOT_BYPASS_ENABLED` | `true`  | Reserved flag for bot-bypass behavior.                                                       |
-| `CHROME_PATH`        | auto    | Path to a Chrome/Chromium binary inside the container.                                       |
-| `PROXY_URL`          | _none_  | Outbound HTTP proxy URL: `http://user:pass@host:port`. Used by Chrome for all requests.      |
+> 👉 **http://localhost:8090/api-docs**
 
-Example `.env`:
+From the Swagger UI you can:
+- 🔍 Browse every endpoint with full request/response schemas
+- 🧪 **Try requests live** with the built-in "Try it out" button
+- 📥 Inspect example payloads and response shapes inline
+- 📤 Export/download the raw spec for codegen or client SDK generation
+
+The static UI playground at **http://localhost:8090/** is a friendlier sandbox for non-engineers.
+
+> 💡 **For client SDKs:** point your favorite OpenAPI generator (e.g. [`openapi-typescript`](https://www.npmjs.com/package/openapi-typescript), [`openapi-generator-cli`](https://openapi-generator.tech/)) at `http://localhost:8090/api-docs/swagger.json` to auto-generate a fully-typed client.
+
+---
+
+## ⚙️ Configuration
+
+All settings are environment variables. Locally, drop them in a `.env` at the project root (auto-loaded). For Docker, set them under `environment:` in [`docker-compose.yml`](docker-compose.yml).
+
+| Variable             | Default | Description                                                                              |
+| -------------------- | ------- | ---------------------------------------------------------------------------------------- |
+| `PORT`               | `8090`  | HTTP port the server listens on.                                                         |
+| `HEADLESS`           | `true`  | Run Chrome headless. _(Informational — `puppeteer-real-browser` is always headful.)_     |
+| `BOT_BYPASS_ENABLED` | `true`  | Reserved flag for future bot-bypass tuning.                                              |
+| `CHROME_PATH`        | auto    | Explicit path to Chrome/Chromium (set inside the container).                             |
+| `PROXY_URL`          | _none_  | Outbound HTTP proxy: `http://[user:pass@]host:port`. Used by Chrome for every request.   |
+
+**Example `.env`:**
 ```env
 PORT=8090
 PROXY_URL=http://user:pass@proxy.example.com:8080
 ```
 
-> The `.env` file is excluded from the Docker build (see `.dockerignore`). To pass values into the container, set them in `docker-compose.yml` under `environment:` instead.
+> 🔒 `.env` is **excluded** from the Docker build (see [`.dockerignore`](.dockerignore)). Container env must go in `docker-compose.yml`.
 
 ---
 
-## API reference
+## 🔌 API reference
 
-Base URL: `http://localhost:8090/api`
+Base URL: `http://localhost:8090/api` · Full schemas: **[Swagger UI](http://localhost:8090/api-docs)**
+
+<table>
+<tr><th>Method</th><th>Path</th><th>Purpose</th></tr>
+<tr><td><code>POST</code></td><td><a href="#post-apiscrape--synchronous-scrape"><code>/api/scrape</code></a></td><td>Synchronous scrape</td></tr>
+<tr><td><code>POST</code></td><td><a href="#post-apiscrapeasync--fire-and-forget"><code>/api/scrape/async</code></a></td><td>Fire-and-forget — returns a <code>jobId</code></td></tr>
+<tr><td><code>POST</code></td><td><a href="#post-apiscrapebatch--multi-url-batch"><code>/api/scrape/batch</code></a></td><td>Batch up to 10 URLs in parallel</td></tr>
+<tr><td><code>GET</code></td><td><a href="#get-apijobsjobid--job-status--result"><code>/api/jobs/:jobId</code></a></td><td>Poll a job's status & result</td></tr>
+<tr><td><code>GET</code></td><td><a href="#get-apijobs--list-all-jobs"><code>/api/jobs</code></a></td><td>List all jobs (metadata only)</td></tr>
+<tr><td><code>GET</code></td><td><a href="#get-apihealth--health-check"><code>/api/health</code></a></td><td>Server health & uptime</td></tr>
+</table>
+
+---
 
 ### `POST /api/scrape` — synchronous scrape
 
-Scrapes a URL and returns the result in the same response. Best for one-off requests and testing.
+Scrapes a URL and returns the full result in the same response. Best for ad-hoc requests and testing.
 
-**Request body** (JSON):
+**Request body:**
 
-| Field        | Type            | Required | Default                                            | Description                                                                                              |
-| ------------ | --------------- | -------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `url`        | string (URL)    | ✅       | —                                                  | The page to scrape.                                                                                      |
-| `waitFor`    | number (0..60000) | ❌     | `3000`                                             | Extra wait in ms after page load (for JS-rendered content).                                              |
-| `extractors` | string[]        | ❌       | `["links","images","headings","text","prices","tables"]` | Subset of extractors to run. Each adds a top-level key to the response. |
-| `fullHtml`   | boolean         | ❌       | `false`                                            | Include the raw post-render HTML under `fullHtml`.                                                       |
-| `screenshot` | boolean         | ❌       | `false`                                            | Include a base64 PNG under `screenshotUrl`.                                                              |
+| Field        | Type                    | Required | Default                                                          | Description                                         |
+| ------------ | ----------------------- | -------- | ---------------------------------------------------------------- | --------------------------------------------------- |
+| `url`        | `string` (URL)          | ✅       | —                                                                | The page to scrape.                                 |
+| `waitFor`    | `number` (0..60000)     | ❌       | `3000`                                                           | Extra ms to wait after page load (JS-rendered pages).|
+| `extractors` | `ExtractorName[]`       | ❌       | `["links","images","headings","text","prices","tables"]`        | Which extractors to run.                            |
+| `fullHtml`   | `boolean`               | ❌       | `false`                                                          | Include raw post-render HTML under `fullHtml`.      |
+| `screenshot` | `boolean`               | ❌       | `false`                                                          | Include base64 PNG under `screenshotUrl`.           |
 
-**Query params:**
-
-- `fields=a,b,c` — return only the listed top-level fields (e.g. `?fields=metadata,product`).
+**Query:** `?fields=a,b,c` — projection of top-level fields.
 
 **Example:**
 
@@ -108,12 +153,12 @@ curl -X POST http://localhost:8090/api/scrape \
   -d '{
     "url": "https://example.com",
     "waitFor": 2000,
-    "extractors": ["headings", "links"],
-    "screenshot": false
+    "extractors": ["headings", "links"]
   }'
 ```
 
-**Response shape:**
+<details>
+<summary><b>Response shape</b></summary>
 
 ```json
 {
@@ -128,26 +173,27 @@ curl -X POST http://localhost:8090/api/scrape \
       "depth": 0,
       "contentType": "text/html"
     },
-    "metadata": { "title": "...", "description": "...", "openGraph": {...}, "jsonLd": [...] },
+    "metadata": { "title": "...", "description": "...", "openGraph": {}, "jsonLd": [] },
     "html": "<readable article html>",
     "markdown": "# Title\n\n...",
     "screenshotUrl": null,
     "timeTaken": "3.42s",
-    "headings": { "h1": [...], "h2": [...] },
-    "links": { "total": 12, "items": [...] },
-    "product": { "productTitle": "...", "variants": [...], ... },
+    "headings": { "h1": ["..."], "h2": ["..."] },
+    "links": { "total": 12, "items": [] },
+    "product": { "productTitle": "...", "variants": [], "priceTry": null },
     "networkSummary": { "totalRequests": 1, "byType": { "document": 1 } }
   }
 }
 ```
 
+</details>
+
 ---
 
 ### `POST /api/scrape/async` — fire-and-forget
 
-Same body as `/api/scrape`. Immediately returns a `jobId`; poll `/api/jobs/:jobId` to check status and get results.
+Same body as `/api/scrape`. Returns immediately with a `jobId`; poll [`/api/jobs/:jobId`](#get-apijobsjobid--job-status--result) for results.
 
-**Response:**
 ```json
 {
   "success": true,
@@ -160,10 +206,9 @@ Same body as `/api/scrape`. Immediately returns a `jobId`; poll `/api/jobs/:jobI
 
 ### `POST /api/scrape/batch` — multi-URL batch
 
-Scrape up to **10 URLs** in parallel. Same options as `/api/scrape` but with a `urls` array instead of `url`.
+Scrape up to **10 URLs in parallel**. Same options as `/api/scrape` but with a `urls` array.
 
-**Request body:**
-
+**Request:**
 ```json
 {
   "urls": ["https://a.com", "https://b.com"],
@@ -171,8 +216,7 @@ Scrape up to **10 URLs** in parallel. Same options as `/api/scrape` but with a `
 }
 ```
 
-**Response** (immediate):
-
+**Response (immediate):**
 ```json
 {
   "success": true,
@@ -182,33 +226,29 @@ Scrape up to **10 URLs** in parallel. Same options as `/api/scrape` but with a `
 }
 ```
 
-Then poll each `jobId` via `/api/jobs/:jobId`.
+Poll each `jobId` independently.
 
 ---
 
-### `GET /api/jobs/:jobId` — job status / result
+### `GET /api/jobs/:jobId` — job status & result
 
-Returns the job record. While running, `data` is absent. Once `completed`, `data` contains the scrape result. On failure, `error` contains the message.
+| Field         | When               | Description                          |
+| ------------- | ------------------ | ------------------------------------ |
+| `status`      | always             | `running` · `completed` · `failed`   |
+| `data`        | on `completed`     | Full `ScrapeResult` (see above).     |
+| `error`       | on `failed`        | Error message string.                |
+| `createdAt`   | always             | ISO timestamp.                       |
+| `completedAt` | when done          | ISO timestamp.                       |
 
-Supports `?fields=` to filter the inner `data` object.
-
-```json
-{
-  "status": "completed",
-  "createdAt": "2026-05-11T12:34:00.000Z",
-  "completedAt": "2026-05-11T12:34:05.000Z",
-  "url": "https://example.com",
-  "data": { ... }
-}
-```
+Supports `?fields=` to project the inner `data`.
 
 ---
 
 ### `GET /api/jobs` — list all jobs
 
-Returns metadata for every job in the in-memory store (without `data` payloads).
+Returns metadata for every job in the in-memory store (without payloads).
 
-> **Note:** the job store is in-memory and resets on container restart.
+> ⚠️ The job store is **in-memory** and resets on container restart. For production, swap [`src/services/job.service.ts`](src/services/job.service.ts) for Redis or Postgres.
 
 ---
 
@@ -220,56 +260,50 @@ Returns metadata for every job in the in-memory store (without `data` payloads).
 
 ---
 
-## Project layout
+## 🧩 Project layout
 
 ```
 .
-├── Dockerfile                    # Bun + puppeteer base image, Xvfb installed
-├── docker-compose.yml            # Single-service compose (port 8090)
-├── docker-entrypoint.sh          # Starts Xvfb, then execs CMD
-├── package.json
-├── bun.lock
-├── tsconfig.json
-├── docs/
-│   └── swagger.yaml              # OpenAPI 3 spec served at /api-docs
-├── public/
-│   └── index.html                # Static UI served at /
-└── src/
-    ├── server.ts                 # HTTP entrypoint
-    ├── app.ts                    # Express app, middleware, static & swagger
-    ├── config/index.ts           # Env vars, constants
-    ├── controllers/
-    │   ├── health.controller.ts
-    │   ├── job.controller.ts
-    │   └── scrape.controller.ts
-    ├── middlewares/
-    │   └── validate.ts           # Zod body validator
-    ├── routes/                   # Thin route layer per resource
+├── 🐳 Dockerfile                    # Bun + puppeteer base image, Xvfb installed
+├── 🐳 docker-compose.yml            # Single-service compose (port 8090)
+├── 🐳 docker-entrypoint.sh          # Starts Xvfb, then execs CMD
+├── 📦 package.json
+├── 🔒 bun.lock
+├── ⚙️  tsconfig.json
+├── 📁 docs/
+│   └── 📜 swagger.yaml              # OpenAPI 3 spec → served at /api-docs
+├── 📁 public/
+│   └── 🌐 index.html                # Static UI → served at /
+└── 📁 src/
+    ├── server.ts                    # HTTP entrypoint
+    ├── app.ts                       # Express app, middleware, static & swagger
+    ├── config/index.ts              # Env vars, constants
+    ├── controllers/                 # Request handlers
+    ├── middlewares/validate.ts      # Zod body validator
+    ├── routes/                      # Thin route layer per resource
     ├── services/
-    │   ├── job.service.ts        # In-memory job store
-    │   └── scraper.service.ts    # Timeout wrapper around scrapePage
+    │   ├── job.service.ts           # In-memory job store
+    │   └── scraper.service.ts       # Timeout wrapper around scrapePage
     ├── utils/
-    │   ├── pick-fields.ts        # ?fields= projection helper
-    │   └── scraper.ts            # All puppeteer + extraction logic
-    ├── validators/
-    │   └── scrape.validator.ts   # Zod schemas
-    └── types/
-        └── index.ts              # Domain & DTO types
+    │   ├── pick-fields.ts           # ?fields= projection helper
+    │   └── scraper.ts               # All puppeteer + extraction logic
+    ├── validators/scrape.validator.ts  # Zod schemas
+    └── types/index.ts               # Domain & DTO types
 ```
 
 ---
 
-## Development
+## 🛠️ Development
 
 ### Scripts
 
 | Script          | What it does                                              |
 | --------------- | --------------------------------------------------------- |
-| `bun run dev`   | Run `src/server.ts` directly with `bun --watch` (no tsc). |
+| `bun run dev`   | Run `src/server.ts` with `bun --watch` (no build step).   |
 | `bun run build` | Compile TypeScript → `dist/`.                             |
 | `bun run start` | Run the compiled output (`bun dist/src/server.js`).       |
 
-### Type-check
+### Type-check without emitting
 
 ```bash
 bunx tsc --noEmit
@@ -277,46 +311,51 @@ bunx tsc --noEmit
 
 ### Adding a new extractor
 
-1. Add the name to the `ExtractorName` union in [src/types/index.ts](src/types/index.ts).
-2. Add it to the enum in [src/validators/scrape.validator.ts](src/validators/scrape.validator.ts).
-3. Implement an `extractFoo($, baseUrl)` function in [src/utils/scraper.ts](src/utils/scraper.ts).
-4. Wire it into the `scrapePage` switch block (`if (extractors.includes("foo"))`).
+1. Add the name to `ExtractorName` in [`src/types/index.ts`](src/types/index.ts).
+2. Add it to the enum in [`src/validators/scrape.validator.ts`](src/validators/scrape.validator.ts).
+3. Implement `extractFoo($, baseUrl)` in [`src/utils/scraper.ts`](src/utils/scraper.ts).
+4. Wire it into the `scrapePage` block (`if (extractors.includes("foo"))`).
 5. Add the response field to `ScrapeResult` in `types/index.ts`.
+6. Update [`docs/swagger.yaml`](docs/swagger.yaml) so Swagger UI reflects the new shape.
 
 ---
 
-## Docker notes
+## 🐳 Docker notes
 
 ### Why an entrypoint script?
 
-`puppeteer-real-browser` runs Chrome **headful** (`headless: false`) so anti-bot detection works. That requires a real X display. The image ships with `xvfb`, and [docker-entrypoint.sh](docker-entrypoint.sh) starts `Xvfb :99` before exec'ing the server, then sets `DISPLAY=:99` so Chrome attaches to it.
+`puppeteer-real-browser` runs Chrome **headful** (`headless: false`) so anti-bot detection works — that requires a real X display. The image ships with `xvfb`, and [`docker-entrypoint.sh`](docker-entrypoint.sh) starts `Xvfb :99` before exec'ing the server, then sets `DISPLAY=:99` so Chrome attaches.
 
-### Increasing parallelism
+### Tuning shared memory
 
-The default `shm_size: "2gb"` in `docker-compose.yml` is sized for a single Chrome instance. If you raise the batch limit (currently 10) or run many parallel scrapes, bump this to `4gb`+ to prevent Chrome crashes.
+The default `shm_size: "2gb"` is sized for a single Chrome. If you raise the batch limit or run many scrapes in parallel, bump it to `4gb`+ to prevent Chrome crashes.
 
 ### Using a proxy
-
-Set `PROXY_URL` in `docker-compose.yml`:
 
 ```yaml
 environment:
   - PROXY_URL=http://user:pass@proxy-server:8080
 ```
 
-Format: `http://[user:pass@]host:port`. Credentials are URL-decoded before being passed to Chrome.
+Credentials are URL-decoded before being passed to Chrome.
 
 ---
 
-## Limitations
+## ⚠️ Limitations & production notes
 
-- **In-memory job store** — jobs are lost on restart. Swap [src/services/job.service.ts](src/services/job.service.ts) for Redis/Postgres for production.
-- **Batch cap is 10 URLs** — see `BATCH_MAX_URLS` in [src/config/index.ts](src/config/index.ts).
-- **Scrape timeout is 240s** — see `SCRAPE_TIMEOUT_MS` in [src/config/index.ts](src/config/index.ts).
-- **No authentication** — anyone with network access to the server can scrape arbitrary URLs. Put it behind a reverse proxy with auth before exposing publicly.
+- **In-memory job store** — jobs are lost on restart. Swap [`src/services/job.service.ts`](src/services/job.service.ts) for Redis or Postgres before going live.
+- **Batch cap is 10 URLs** — see `BATCH_MAX_URLS` in [`src/config/index.ts`](src/config/index.ts).
+- **Scrape timeout is 240s** — see `SCRAPE_TIMEOUT_MS` in [`src/config/index.ts`](src/config/index.ts).
+- **No authentication** — anyone with network access can scrape arbitrary URLs. Put it behind a reverse proxy with auth/rate-limits before exposing publicly.
 
 ---
 
-## License
+## 📄 License
 
-ISC
+Released under the **ISC** license.
+
+<div align="center">
+
+Made with 🕷️ + ☕ — built on [Bun](https://bun.sh/), [Express](https://expressjs.com/), and [Puppeteer](https://pptr.dev/).
+
+</div>
