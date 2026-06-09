@@ -3,7 +3,76 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Scrape Server</title>
+
+    <!-- ─── PRIMARY SEO ─────────────────────────────────────── -->
+    <title>Scrape Server — Web Scraping API with Anti-Bot Bypass</title>
+    <meta
+      name="description"
+      content="Free, self-hostable web scraping API. Paste any URL to extract metadata, structured product data, links, images, prices, tables, Markdown and screenshots — with Cloudflare/Turnstile anti-bot bypass. Built with Bun, Express &amp; Puppeteer."
+    />
+    <meta
+      name="keywords"
+      content="web scraping, scraping API, web scraper, puppeteer, cloudflare bypass, anti-bot, product scraper, data extraction, JSON-LD, REST API, bun, typescript"
+    />
+    <meta name="author" content="Rejoyan Islam" />
+    <meta name="robots" content="index, follow" />
+    <meta name="theme-color" content="#0f1117" />
+    <link rel="canonical" href="https://scrape-server.rejoyan.me/" />
+
+    <!-- ─── ICONS ───────────────────────────────────────────── -->
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="apple-touch-icon" href="/logo.svg" />
+
+    <!-- ─── OPEN GRAPH (Facebook, LinkedIn, etc.) ───────────── -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Scrape Server" />
+    <meta
+      property="og:title"
+      content="Scrape Server — Web Scraping API with Anti-Bot Bypass"
+    />
+    <meta
+      property="og:description"
+      content="Free, self-hostable web scraping API with Cloudflare bypass and structured product extraction. Built with Bun, Express &amp; Puppeteer."
+    />
+    <meta property="og:url" content="https://scrape-server.rejoyan.me/" />
+    <meta
+      property="og:image"
+      content="https://scrape-server.rejoyan.me/og-image.svg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Scrape Server" />
+
+    <!-- ─── TWITTER CARD ────────────────────────────────────── -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Scrape Server — Web Scraping API with Anti-Bot Bypass"
+    />
+    <meta
+      name="twitter:description"
+      content="Free, self-hostable web scraping API with Cloudflare bypass and structured product extraction. Bun + Express + Puppeteer."
+    />
+    <meta
+      name="twitter:image"
+      content="https://scrape-server.rejoyan.me/og-image.svg"
+    />
+
+    <!-- ─── STRUCTURED DATA (JSON-LD) ───────────────────────── -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Scrape Server",
+        "url": "https://scrape-server.rejoyan.me/",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Any",
+        "description": "Self-hostable web scraping API with anti-bot bypass and structured product extraction.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "author": { "@type": "Person", "name": "Rejoyan Islam" }
+      }
+    </script>
+
     <style>
       * {
         box-sizing: border-box;
@@ -30,12 +99,25 @@
         margin-bottom: 2.5rem;
       }
 
+      .brand {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .brand img {
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+      }
+
       header h1 {
         font-size: 2.2rem;
         background: linear-gradient(135deg, #58a6ff, #bc8cff);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 0.5rem;
       }
 
       header p {
@@ -328,7 +410,10 @@
   <body>
     <div class="container">
       <header>
-        <h1>&#x1F578; Scrape Server</h1>
+        <div class="brand">
+          <img src="/logo.svg" alt="Scrape Server logo" width="48" height="48" />
+          <h1>Scrape Server</h1>
+        </div>
         <p>
           Free Apify-like web scraping — paste any URL and extract everything
         </p>
