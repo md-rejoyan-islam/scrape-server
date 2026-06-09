@@ -23,18 +23,18 @@
 
 ## ✨ Highlights
 
-| | |
-|---|---|
-| 🛡️ **Anti-bot bypass** | Cloudflare Turnstile & generic challenges via [`puppeteer-real-browser`](https://www.npmjs.com/package/puppeteer-real-browser) + stealth plugin |
-| 🛒 **Structured product data** | Normalized output from JSON-LD, microdata, OpenGraph — including variants, prices, stock |
-| 🧩 **Pluggable extractors** | `links`, `images`, `headings`, `text`, `prices`, `tables` — opt in per request |
-| 📜 **Readability & Markdown** | Clean article HTML and Markdown output via Mozilla Readability + Turndown |
-| 📸 **Screenshots** | Base64-encoded PNG of the rendered page |
-| ⚡ **Three execution modes** | Synchronous, async (job-based), and parallel batch (up to 10 URLs) |
-| 📚 **Swagger UI** | Interactive OpenAPI 3 docs at `/api-docs` |
-| 🎯 **Field projection** | `?fields=a,b,c` to trim responses |
-| 🐳 **Docker-native** | One-command bring-up with bundled Xvfb for headful Chrome |
-| ✅ **Type-safe inputs** | Zod-validated request bodies |
+|                                |                                                                                                                                                 |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🛡️ **Anti-bot bypass**         | Cloudflare Turnstile & generic challenges via [`puppeteer-real-browser`](https://www.npmjs.com/package/puppeteer-real-browser) + stealth plugin |
+| 🛒 **Structured product data** | Normalized output from JSON-LD, microdata, OpenGraph — including variants, prices, stock                                                        |
+| 🧩 **Pluggable extractors**    | `links`, `images`, `headings`, `text`, `prices`, `tables` — opt in per request                                                                  |
+| 📜 **Readability & Markdown**  | Clean article HTML and Markdown output via Mozilla Readability + Turndown                                                                       |
+| 📸 **Screenshots**             | Base64-encoded PNG of the rendered page                                                                                                         |
+| ⚡ **Three execution modes**   | Synchronous, async (job-based), and parallel batch (up to 10 URLs)                                                                              |
+| 📚 **Swagger UI**              | Interactive OpenAPI 3 docs at `/api-docs`                                                                                                       |
+| 🎯 **Field projection**        | `?fields=a,b,c` to trim responses                                                                                                               |
+| 🐳 **Docker-native**           | One-command bring-up with bundled Xvfb for headful Chrome                                                                                       |
+| ✅ **Type-safe inputs**        | Zod-validated request bodies                                                                                                                    |
 
 ---
 
@@ -48,14 +48,15 @@ docker compose up --build
 
 That's it. After ~2 minutes (first build):
 
-| | |
-|---|---|
-| 🖥️ **Web UI** | http://localhost:8090 |
-| 📖 **Swagger docs** | http://localhost:8090/api-docs |
-| 📡 **API base** | http://localhost:8090/api |
-| ❤️ **Health** | http://localhost:8090/api/health |
+|                     |                                  |
+| ------------------- | -------------------------------- |
+| 🖥️ **Web UI**       | http://localhost:8090            |
+| 📖 **Swagger docs** | http://localhost:8090/api-docs   |
+| 📡 **API base**     | http://localhost:8090/api        |
+| ❤️ **Health**       | http://localhost:8090/api/health |
 
 Stop the stack:
+
 ```bash
 docker compose down
 ```
@@ -70,6 +71,7 @@ bun run dev       # watch mode — auto-reload on changes
 ```
 
 Build & run the compiled output:
+
 ```bash
 bun run build     # tsc → dist/
 bun run start     # bun dist/src/server.js
@@ -84,6 +86,7 @@ The full OpenAPI 3 specification lives at [`docs/swagger.yaml`](docs/swagger.yam
 > 👉 **http://localhost:8090/api-docs**
 
 From the Swagger UI you can:
+
 - 🔍 Browse every endpoint with full request/response schemas
 - 🧪 **Try requests live** with the built-in "Try it out" button
 - 📥 Inspect example payloads and response shapes inline
@@ -99,15 +102,16 @@ The static UI playground at **http://localhost:8090/** is a friendlier sandbox f
 
 All settings are environment variables. Locally, drop them in a `.env` at the project root (auto-loaded). For Docker, set them under `environment:` in [`docker-compose.yml`](docker-compose.yml).
 
-| Variable             | Default | Description                                                                              |
-| -------------------- | ------- | ---------------------------------------------------------------------------------------- |
-| `PORT`               | `8090`  | HTTP port the server listens on.                                                         |
-| `HEADLESS`           | `true`  | Run Chrome headless. _(Informational — `puppeteer-real-browser` is always headful.)_     |
-| `BOT_BYPASS_ENABLED` | `true`  | Reserved flag for future bot-bypass tuning.                                              |
-| `CHROME_PATH`        | auto    | Explicit path to Chrome/Chromium (set inside the container).                             |
-| `PROXY_URL`          | _none_  | Outbound HTTP proxy: `http://[user:pass@]host:port`. Used by Chrome for every request.   |
+| Variable             | Default | Description                                                                            |
+| -------------------- | ------- | -------------------------------------------------------------------------------------- |
+| `PORT`               | `8090`  | HTTP port the server listens on.                                                       |
+| `HEADLESS`           | `true`  | Run Chrome headless. _(Informational — `puppeteer-real-browser` is always headful.)_   |
+| `BOT_BYPASS_ENABLED` | `true`  | Reserved flag for future bot-bypass tuning.                                            |
+| `CHROME_PATH`        | auto    | Explicit path to Chrome/Chromium (set inside the container).                           |
+| `PROXY_URL`          | _none_  | Outbound HTTP proxy: `http://[user:pass@]host:port`. Used by Chrome for every request. |
 
 **Example `.env`:**
+
 ```env
 PORT=8090
 PROXY_URL=http://user:pass@proxy.example.com:8080
@@ -139,13 +143,13 @@ Scrapes a URL and returns the full result in the same response. Best for ad-hoc 
 
 **Request body:**
 
-| Field        | Type                    | Required | Default                                                          | Description                                         |
-| ------------ | ----------------------- | -------- | ---------------------------------------------------------------- | --------------------------------------------------- |
-| `url`        | `string` (URL)          | ✅       | —                                                                | The page to scrape.                                 |
-| `waitFor`    | `number` (0..60000)     | ❌       | `3000`                                                           | Extra ms to wait after page load (JS-rendered pages).|
-| `extractors` | `ExtractorName[]`       | ❌       | `["links","images","headings","text","prices","tables"]`        | Which extractors to run.                            |
-| `fullHtml`   | `boolean`               | ❌       | `false`                                                          | Include raw post-render HTML under `fullHtml`.      |
-| `screenshot` | `boolean`               | ❌       | `false`                                                          | Include base64 PNG under `screenshotUrl`.           |
+| Field        | Type                | Required | Default                                                  | Description                                           |
+| ------------ | ------------------- | -------- | -------------------------------------------------------- | ----------------------------------------------------- |
+| `url`        | `string` (URL)      | ✅       | —                                                        | The page to scrape.                                   |
+| `waitFor`    | `number` (0..60000) | ❌       | `3000`                                                   | Extra ms to wait after page load (JS-rendered pages). |
+| `extractors` | `ExtractorName[]`   | ❌       | `["links","images","headings","text","prices","tables"]` | Which extractors to run.                              |
+| `fullHtml`   | `boolean`           | ❌       | `false`                                                  | Include raw post-render HTML under `fullHtml`.        |
+| `screenshot` | `boolean`           | ❌       | `false`                                                  | Include base64 PNG under `screenshotUrl`.             |
 
 **Query:** `?fields=a,b,c` — projection of top-level fields.
 
@@ -177,7 +181,12 @@ curl -X POST http://localhost:8090/api/scrape \
       "depth": 0,
       "contentType": "text/html"
     },
-    "metadata": { "title": "...", "description": "...", "openGraph": {}, "jsonLd": [] },
+    "metadata": {
+      "title": "...",
+      "description": "...",
+      "openGraph": {},
+      "jsonLd": []
+    },
     "html": "<readable article html>",
     "markdown": "# Title\n\n...",
     "screenshotUrl": null,
@@ -213,6 +222,7 @@ Same body as `/api/scrape`. Returns immediately with a `jobId`; poll [`/api/jobs
 Scrape up to **10 URLs in parallel**. Same options as `/api/scrape` but with a `urls` array.
 
 **Request:**
+
 ```json
 {
   "urls": ["https://a.com", "https://b.com"],
@@ -221,6 +231,7 @@ Scrape up to **10 URLs in parallel**. Same options as `/api/scrape` but with a `
 ```
 
 **Response (immediate):**
+
 ```json
 {
   "success": true,
@@ -236,13 +247,13 @@ Poll each `jobId` independently.
 
 ### `GET /api/jobs/:jobId` — job status & result
 
-| Field         | When               | Description                          |
-| ------------- | ------------------ | ------------------------------------ |
-| `status`      | always             | `running` · `completed` · `failed`   |
-| `data`        | on `completed`     | Full `ScrapeResult` (see above).     |
-| `error`       | on `failed`        | Error message string.                |
-| `createdAt`   | always             | ISO timestamp.                       |
-| `completedAt` | when done          | ISO timestamp.                       |
+| Field         | When           | Description                        |
+| ------------- | -------------- | ---------------------------------- |
+| `status`      | always         | `running` · `completed` · `failed` |
+| `data`        | on `completed` | Full `ScrapeResult` (see above).   |
+| `error`       | on `failed`    | Error message string.              |
+| `createdAt`   | always         | ISO timestamp.                     |
+| `completedAt` | when done      | ISO timestamp.                     |
 
 Supports `?fields=` to project the inner `data`.
 
@@ -301,11 +312,11 @@ Returns metadata for every job in the in-memory store (without payloads).
 
 ### Scripts
 
-| Script          | What it does                                              |
-| --------------- | --------------------------------------------------------- |
-| `bun run dev`   | Run `src/server.ts` with `bun --watch` (no build step).   |
-| `bun run build` | Compile TypeScript → `dist/`.                             |
-| `bun run start` | Run the compiled output (`bun dist/src/server.js`).       |
+| Script          | What it does                                            |
+| --------------- | ------------------------------------------------------- |
+| `bun run dev`   | Run `src/server.ts` with `bun --watch` (no build step). |
+| `bun run build` | Compile TypeScript → `dist/`.                           |
+| `bun run start` | Run the compiled output (`bun dist/src/server.js`).     |
 
 ### Type-check without emitting
 
@@ -360,10 +371,10 @@ Credentials are URL-decoded before being passed to Chrome.
 
 This project is **proprietary and source-available** — it is **not** open source. The code is published for reference and evaluation only. You may **not** copy, reproduce, modify, distribute, host, deploy, or create derivative works from any part of it without prior **written permission** from the author. See the full [`LICENSE`](LICENSE) for the exact terms.
 
-For licensing or permission inquiries: **perfectjillur@gmail.com**
+For licensing or permission inquiries: **rejoyanislam0014@gmail.com**
 
 <div align="center">
 
-Made with 🕷️ + ☕ by [Rejoyan Islam](mailto:perfectjillur@gmail.com) — built on [Bun](https://bun.sh/), [Express](https://expressjs.com/), and [Puppeteer](https://pptr.dev/).
+Made with 🕷️ + ☕ by [Rejoyan Islam](mailto:rejoyanislam0014@gmail.com) — built on [Bun](https://bun.sh/), [Express](https://expressjs.com/), and [Puppeteer](https://pptr.dev/).
 
 </div>
